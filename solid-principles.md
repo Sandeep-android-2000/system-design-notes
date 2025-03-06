@@ -1,29 +1,25 @@
-SOLID Principles in Object-Oriented Programming
+# SOLID Principles in Object-Oriented Programming
 
-Introduction
-
+## Introduction
 SOLID is an acronym representing five design principles that help software developers create more maintainable, scalable, and robust object-oriented applications. These principles were introduced by Robert C. Martin (Uncle Bob) to improve software design and architecture.
 
-SOLID Principles:
+### SOLID Principles:
+1. **Single Responsibility Principle (SRP)**
+2. **Open/Closed Principle (OCP)**
+3. **Liskov Substitution Principle (LSP)**
+4. **Interface Segregation Principle (ISP)**
+5. **Dependency Inversion Principle (DIP)**
 
-Single Responsibility Principle (SRP)
+---
 
-Open/Closed Principle (OCP)
+## 1. Single Responsibility Principle (SRP)
 
-Liskov Substitution Principle (LSP)
+**Definition:** A class should have only one reason to change. This means a class should have only one responsibility or function.
 
-Interface Segregation Principle (ISP)
+**Explanation:** If a class handles multiple responsibilities, changes in one responsibility might impact others, leading to unintended side effects.
 
-Dependency Inversion Principle (DIP)
-
-1. Single Responsibility Principle (SRP)
-
-Definition: A class should have only one reason to change. This means a class should have only one responsibility or function.
-
-Explanation: If a class handles multiple responsibilities, changes in one responsibility might impact others, leading to unintended side effects.
-
-Example:
-
+**Example:**
+```java
 class Invoice {
     private double amount;
     
@@ -35,9 +31,9 @@ class Invoice {
         // Printing logic (violates SRP)
     }
 }
-
-Improved Version:
-
+```
+**Improved Version:**
+```java
 class Invoice {
     private double amount;
     
@@ -51,17 +47,19 @@ class InvoicePrinter {
         // Printing logic
     }
 }
+```
+Here, `Invoice` handles calculations, and `InvoicePrinter` takes care of printing, adhering to SRP.
 
-Here, Invoice handles calculations, and InvoicePrinter takes care of printing, adhering to SRP.
+---
 
-2. Open/Closed Principle (OCP)
+## 2. Open/Closed Principle (OCP)
 
-Definition: Software entities (classes, modules, functions) should be open for extension but closed for modification.
+**Definition:** Software entities (classes, modules, functions) should be open for extension but closed for modification.
 
-Explanation: You should be able to add new functionality without modifying existing code, ensuring maintainability.
+**Explanation:** You should be able to add new functionality without modifying existing code, ensuring maintainability.
 
-Example (Violation of OCP):
-
+**Example (Violation of OCP):**
+```java
 class PaymentProcessor {
     public void processPayment(String paymentType) {
         if (paymentType.equals("CreditCard")) {
@@ -71,9 +69,9 @@ class PaymentProcessor {
         }
     }
 }
-
-Improved Version (OCP Compliance using Polymorphism):
-
+```
+**Improved Version (OCP Compliance using Polymorphism):**
+```java
 interface Payment {
     void pay();
 }
@@ -95,17 +93,19 @@ class PaymentProcessor {
         payment.pay();
     }
 }
+```
+Now, new payment methods can be added without modifying `PaymentProcessor`.
 
-Now, new payment methods can be added without modifying PaymentProcessor.
+---
 
-3. Liskov Substitution Principle (LSP)
+## 3. Liskov Substitution Principle (LSP)
 
-Definition: Subtypes must be substitutable for their base types without altering the correctness of the program.
+**Definition:** Subtypes must be substitutable for their base types without altering the correctness of the program.
 
-Explanation: A derived class should extend the base class without changing its behavior.
+**Explanation:** A derived class should extend the base class without changing its behavior.
 
-Example (Violation of LSP):
-
+**Example (Violation of LSP):**
+```java
 class Rectangle {
     protected int width, height;
     
@@ -124,19 +124,21 @@ class Square extends Rectangle {
         super.setHeight(height);
     }
 }
+```
+Here, `Square` modifies `Rectangle`'s behavior, violating LSP.
 
-Here, Square modifies Rectangle's behavior, violating LSP.
+**Correct Approach:** Instead of inheritance, use composition or a separate hierarchy for `Square` and `Rectangle`.
 
-Correct Approach: Instead of inheritance, use composition or a separate hierarchy for Square and Rectangle.
+---
 
-4. Interface Segregation Principle (ISP)
+## 4. Interface Segregation Principle (ISP)
 
-Definition: A class should not be forced to implement interfaces it does not use.
+**Definition:** A class should not be forced to implement interfaces it does not use.
 
-Explanation: Instead of one large interface, create multiple small, specific interfaces.
+**Explanation:** Instead of one large interface, create multiple small, specific interfaces.
 
-Example (Violation of ISP):
-
+**Example (Violation of ISP):**
+```java
 interface Worker {
     void work();
     void eat();
@@ -150,9 +152,9 @@ class Robot implements Worker {
         // Robots don’t eat! (ISP violation)
     }
 }
-
-Improved Version (ISP Compliance):
-
+```
+**Improved Version (ISP Compliance):**
+```java
 interface Workable {
     void work();
 }
@@ -175,17 +177,19 @@ class Human implements Workable, Eatable {
         // Eating logic
     }
 }
+```
+Now, `Robot` is not forced to implement `eat()`, adhering to ISP.
 
-Now, Robot is not forced to implement eat(), adhering to ISP.
+---
 
-5. Dependency Inversion Principle (DIP)
+## 5. Dependency Inversion Principle (DIP)
 
-Definition: High-level modules should not depend on low-level modules. Both should depend on abstractions.
+**Definition:** High-level modules should not depend on low-level modules. Both should depend on abstractions.
 
-Explanation: Instead of directly depending on concrete implementations, use interfaces or abstractions.
+**Explanation:** Instead of directly depending on concrete implementations, use interfaces or abstractions.
 
-Example (Violation of DIP):
-
+**Example (Violation of DIP):**
+```java
 class Light {
     public void turnOn() {}
     public void turnOff() {}
@@ -201,11 +205,11 @@ class Switch {
         light.turnOn();
     }
 }
+```
+Here, `Switch` is tightly coupled with `Light`.
 
-Here, Switch is tightly coupled with Light.
-
-Improved Version (DIP Compliance):
-
+**Improved Version (DIP Compliance):**
+```java
 interface Switchable {
     void turnOn();
     void turnOff();
@@ -231,5 +235,16 @@ class Switch {
         device.turnOn();
     }
 }
+```
+Now, `Switch` can work with `Light`, `Fan`, or any `Switchable` device, reducing dependency.
 
-Now, Switch can work with Light, Fan, or any Switchable device, reducing dependency.
+---
+
+## Conclusion
+The SOLID principles provide a foundation for writing better object-oriented code. Following these principles ensures:
+- **Maintainability** (Easier to modify and extend code)
+- **Scalability** (Easier to add new features)
+- **Testability** (Easier to test code independently)
+- **Code Reusability** (Encourages modularity)
+
+By adhering to SOLID principles, developers can build software that is robust, flexible, and future-proof.
