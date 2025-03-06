@@ -100,7 +100,7 @@ Now, new payment methods can be added without modifying `PaymentProcessor`.
 
 ## 3. Liskov Substitution Principle (LSP)
 
-**Definition:** Subtypes must be substitutable for their base types without altering the correctness of the program.
+**Definition:** If Class B is a subtype of Class A ,then we should be able to replace object of A with B without breaking the behaviour of program 
 
 **Explanation:** A derived class should extend the base class without changing its behavior.
 
