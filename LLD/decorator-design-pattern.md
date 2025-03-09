@@ -114,5 +114,6 @@ public class DecoratorPatternDemo {
 ✔ **Reusable Components:** Different decorators can be combined to create unique behaviors.  
 ✔ **Open/Closed Principle:** Allows extending behavior without altering existing code.  
 ✔ **Separation of Concerns:** Keeps core functionality separate from additional features.  
+✔ **Prevents Class Explosion:** Instead of creating multiple subclasses for every combination of features (e.g., `TimestampLogger`, `LevelLogger`, `TimestampLevelLogger`), decorators allow us to dynamically compose behaviors, keeping the system **scalable and maintainable**.  
 
 By implementing the **Decorator Pattern**, we create a **modular, extensible logging system** in a microservices architecture, making debugging and monitoring more efficient.
