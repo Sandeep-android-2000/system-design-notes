@@ -19,7 +19,7 @@ interface Observer {
 }
 ```
 
-### **Step 2: Create a Subject Interface**
+### **Step 2: Create a Observable Interface**
 ```java
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +31,7 @@ interface Subject {
 }
 ```
 
-### **Step 3: Implement the Concrete Subject (Product Stock Manager)**
+### **Step 3: Implement the Concrete Observable (Product Stock Manager)**
 ```java
 class Product implements Subject {
     private List<Observer> observers = new ArrayList<>();
