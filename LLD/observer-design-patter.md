@@ -1,21 +1,21 @@
-# Observer Design Pattern
+# Observer Design Pattern - E-commerce "Notify Me" Feature
 
 ## What is the Observer Pattern?
 The **Observer Pattern** is a **behavioral design pattern** that defines a **one-to-many dependency** between objects. When the **subject (observable)** changes its state, **all its dependents (observers)** are notified automatically.
 
 ## Key Concepts:
 - **Subject (Observable):** Maintains a list of observers and notifies them of any state changes.
-- **Observers:** Objects that want to be notified when the subject changes.
+- **Observers:** Users who have subscribed to be notified when an item is back in stock.
 - **Loose Coupling:** Observers and subjects interact via an interface, making the system more flexible.
 
 ---
 
-## Observer Pattern – Implementation in Java
+## Observer Pattern – Implementation for an E-commerce "Notify Me" Feature
 
 ### **Step 1: Create an Observer Interface**
 ```java
 interface Observer {
-    void update(String message);
+    void update(String productName);
 }
 ```
 
@@ -27,14 +27,27 @@ import java.util.List;
 interface Subject {
     void addObserver(Observer observer);
     void removeObserver(Observer observer);
-    void notifyObservers(String message);
+    void notifyObservers();
 }
 ```
 
-### **Step 3: Implement the Concrete Subject (Observable)**
+### **Step 3: Implement the Concrete Subject (Product Stock Manager)**
 ```java
-class NewsAgency implements Subject {
+class Product implements Subject {
     private List<Observer> observers = new ArrayList<>();
+    private String productName;
+    private boolean inStock = false;
+
+    public Product(String productName) {
+        this.productName = productName;
+    }
+
+    public void setInStock(boolean inStock) {
+        this.inStock = inStock;
+        if (inStock) {
+            notifyObservers();
+        }
+    }
 
     @Override
     public void addObserver(Observer observer) {
@@ -47,56 +60,55 @@ class NewsAgency implements Subject {
     }
 
     @Override
-    public void notifyObservers(String message) {
+    public void notifyObservers() {
         for (Observer observer : observers) {
-            observer.update(message);
+            observer.update(productName);
         }
     }
 }
 ```
 
-### **Step 4: Implement Concrete Observers**
+### **Step 4: Implement Concrete Observers (Customers who subscribed for notifications)**
 ```java
-class NewsChannel implements Observer {
+class Customer implements Observer {
     private String name;
 
-    public NewsChannel(String name) {
+    public Customer(String name) {
         this.name = name;
     }
 
     @Override
-    public void update(String message) {
-        System.out.println(name + " received update: " + message);
+    public void update(String productName) {
+        System.out.println("Hello " + name + ", the product '" + productName + "' is back in stock!");
     }
 }
 ```
 
-### **Step 5: Demonstrate the Observer Pattern**
+### **Step 5: Demonstrate the Observer Pattern in an E-commerce Scenario**
 ```java
-public class ObserverPatternDemo {
+public class ObserverPatternEcommerceDemo {
     public static void main(String[] args) {
-        NewsAgency agency = new NewsAgency();
-        
-        Observer channel1 = new NewsChannel("Channel 1");
-        Observer channel2 = new NewsChannel("Channel 2");
+        Product product = new Product("Samsung Galaxy S24 Ultra");
 
-        agency.addObserver(channel1);
-        agency.addObserver(channel2);
+        Observer customer1 = new Customer("Alice");
+        Observer customer2 = new Customer("Bob");
 
-        agency.notifyObservers("Breaking News: Observer Pattern Implemented!");
-        
-        agency.removeObserver(channel1);
-        
-        agency.notifyObservers("Update: Channel 1 unsubscribed!");
+        product.addObserver(customer1);
+        product.addObserver(customer2);
+
+        // When the product is back in stock, notify all subscribed customers
+        System.out.println("Product is now available...");
+        product.setInStock(true);
     }
 }
 ```
 
 ---
 
-## Benefits of the Observer Pattern
-✔ **Loosely Coupled:** The subject and observers interact through an interface, making changes easier.  
-✔ **Automatic Updates:** All observers receive notifications when the subject changes.  
-✔ **Flexible:** New observers can be added dynamically without modifying existing code.  
+## Benefits of the Observer Pattern in E-commerce
+✔ **Automatic Notifications:** Customers receive updates as soon as the product is in stock.  
+✔ **Decoupled System:** The product stock logic and user notifications are independent.  
+✔ **Scalable:** More users can subscribe without modifying existing code.  
+✔ **Real-time Alerts:** Improves customer satisfaction with instant stock availability updates.  
 
-By implementing the Observer Pattern, we create a **flexible** and **scalable** event-driven system.
+By implementing the Observer Pattern, we create a **robust and user-friendly "Notify Me" feature** in an e-commerce system.
