@@ -1,119 +1,199 @@
-# Decorator Design Pattern in System Design
+# Decorator Design Pattern - Pizza Example
 
 ## **What is the Decorator Pattern?**
-The **Decorator Pattern** is a **structural design pattern** used to dynamically extend the behavior of objects without modifying their original code. It follows the principle of **composition over inheritance**, allowing flexibility in adding new functionality to objects at runtime.
+The **Decorator Pattern** is a structural design pattern that allows you to dynamically add new behavior to objects without modifying their existing structure. It helps in extending the functionality of objects in a flexible way.
 
-## **Key Concepts:**
-- **Component (Interface/Abstract Class):** Defines the common interface for both concrete components and decorators.
-- **Concrete Component:** The base class that defines the core functionality.
-- **Decorator:** A wrapper class that adds additional behavior while following the same interface.
-- **Concrete Decorators:** Extend the functionality of the component by wrapping it.
+## **Real-Life Example: Pizza with Toppings**
+Consider an online pizza ordering system. A base pizza can have multiple toppings, such as **Extra Cheese, Jalapeno, Olives, Pepperoni**, etc. Instead of creating multiple subclasses for every possible combination of toppings, we can use the **Decorator Pattern** to dynamically add toppings at runtime.
 
 ---
 
-# **Real-world System Design Example – Logging in Microservices**
+## **Implementation in Java**
 
-In a **microservices architecture**, logging plays a crucial role in tracking requests and debugging issues. Using the **Decorator Pattern**, we can enhance logging functionality without modifying the core request-handling logic.
+### **Step 1: Create a Base Interface**
+This interface represents a **Pizza** that all types of pizzas (base and decorated) will implement.
 
----
-
-# **Implementation in Java**
-
-## **Step 1: Create a Common Interface**
 ```java
-interface Logger {
-    void log(String message);
+// Component Interface
+interface Pizza {
+    String getDescription();
+    double getCost();
 }
 ```
 
-## **Step 2: Implement the Concrete Logger (Base Component)**
+### **Step 2: Create Concrete Implementations (Base Pizzas)**
+These are basic pizza types that can be customized with toppings.
+
 ```java
-class SimpleLogger implements Logger {
+// Concrete Component - Margherita Pizza
+class MargheritaPizza implements Pizza {
     @Override
-    public void log(String message) {
-        System.out.println("Log: " + message);
-    }
-}
-```
-
-## **Step 3: Create an Abstract Decorator**
-```java
-abstract class LoggerDecorator implements Logger {
-    protected Logger logger;
-
-    public LoggerDecorator(Logger logger) {
-        this.logger = logger;
+    public String getDescription() {
+        return "Margherita Pizza";
     }
 
     @Override
-    public void log(String message) {
-        logger.log(message);
+    public double getCost() {
+        return 200.00;
     }
 }
-```
 
-## **Step 4: Implement Concrete Decorators**
-
-### **Adding Timestamp to Logs**
-```java
-import java.time.LocalDateTime;
-
-class TimestampLogger extends LoggerDecorator {
-    public TimestampLogger(Logger logger) {
-        super(logger);
+// Concrete Component - Farmhouse Pizza
+class FarmhousePizza implements Pizza {
+    @Override
+    public String getDescription() {
+        return "Farmhouse Pizza";
     }
 
     @Override
-    public void log(String message) {
-        super.log(LocalDateTime.now() + " - " + message);
+    public double getCost() {
+        return 250.00;
     }
 }
 ```
 
-### **Adding Log Level (INFO, DEBUG, ERROR)**
-```java
-class LevelLogger extends LoggerDecorator {
-    private String level;
+### **Step 3: Create an Abstract Decorator**
+The decorator class should implement the same interface as the component, so it can replace it dynamically.
 
-    public LevelLogger(Logger logger, String level) {
-        super(logger);
-        this.level = level;
+```java
+// Abstract Decorator
+abstract class PizzaDecorator implements Pizza {
+    protected Pizza pizza;
+
+    public PizzaDecorator(Pizza pizza) {
+        this.pizza = pizza;
     }
 
     @Override
-    public void log(String message) {
-        super.log("[" + level + "] " + message);
+    public String getDescription() {
+        return pizza.getDescription();
+    }
+
+    @Override
+    public double getCost() {
+        return pizza.getCost();
     }
 }
 ```
 
-## **Step 5: Demonstrate the Decorator Pattern**
+### **Step 4: Create Concrete Decorators (Toppings)**
+These classes add toppings to the pizza dynamically.
+
+```java
+// Concrete Decorator - Extra Cheese
+class ExtraCheese extends PizzaDecorator {
+    public ExtraCheese(Pizza pizza) {
+        super(pizza);
+    }
+
+    @Override
+    public String getDescription() {
+        return pizza.getDescription() + ", Extra Cheese";
+    }
+
+    @Override
+    public double getCost() {
+        return pizza.getCost() + 50.00; // Adding extra cheese cost
+    }
+}
+
+// Concrete Decorator - Jalapeno
+class Jalapeno extends PizzaDecorator {
+    public Jalapeno(Pizza pizza) {
+        super(pizza);
+    }
+
+    @Override
+    public String getDescription() {
+        return pizza.getDescription() + ", Jalapeno";
+    }
+
+    @Override
+    public double getCost() {
+        return pizza.getCost() + 40.00; // Adding Jalapeno cost
+    }
+}
+
+// Concrete Decorator - Olives
+class Olives extends PizzaDecorator {
+    public Olives(Pizza pizza) {
+        super(pizza);
+    }
+
+    @Override
+    public String getDescription() {
+        return pizza.getDescription() + ", Olives";
+    }
+
+    @Override
+    public double getCost() {
+        return pizza.getCost() + 30.00; // Adding Olives cost
+    }
+}
+```
+
+### **Step 5: Client Code**
+Now, we can dynamically add toppings to our pizza.
+
 ```java
 public class DecoratorPatternDemo {
     public static void main(String[] args) {
-        Logger simpleLogger = new SimpleLogger();
-        Logger timestampLogger = new TimestampLogger(simpleLogger);
-        Logger levelLogger = new LevelLogger(timestampLogger, "INFO");
+        // Order 1: Margherita Pizza with Extra Cheese and Jalapeno
+        Pizza pizza1 = new MargheritaPizza();
+        pizza1 = new ExtraCheese(pizza1);
+        pizza1 = new Jalapeno(pizza1);
+        System.out.println("Order 1: " + pizza1.getDescription());
+        System.out.println("Total Cost: ₹" + pizza1.getCost());
 
-        System.out.println("Basic Logging:");
-        simpleLogger.log("User logged in.");
+        System.out.println("----------------------------------");
 
-        System.out.println("\nLogging with Timestamp:");
-        timestampLogger.log("User added item to cart.");
-
-        System.out.println("\nLogging with Timestamp & Log Level:");
-        levelLogger.log("Payment processed successfully.");
+        // Order 2: Farmhouse Pizza with Extra Cheese, Jalapeno, and Olives
+        Pizza pizza2 = new FarmhousePizza();
+        pizza2 = new ExtraCheese(pizza2);
+        pizza2 = new Jalapeno(pizza2);
+        pizza2 = new Olives(pizza2);
+        System.out.println("Order 2: " + pizza2.getDescription());
+        System.out.println("Total Cost: ₹" + pizza2.getCost());
     }
 }
 ```
 
 ---
 
-## **Benefits of the Decorator Pattern in System Design**
-✔ **Flexible:** Easily extends functionality without modifying existing code.  
-✔ **Reusable Components:** Different decorators can be combined to create unique behaviors.  
-✔ **Open/Closed Principle:** Allows extending behavior without altering existing code.  
-✔ **Separation of Concerns:** Keeps core functionality separate from additional features.  
-✔ **Prevents Class Explosion:** Instead of creating multiple subclasses for every combination of features (e.g., `TimestampLogger`, `LevelLogger`, `TimestampLevelLogger`), decorators allow us to dynamically compose behaviors, keeping the system **scalable and maintainable**.  
+## **Output**
+```
+Order 1: Margherita Pizza, Extra Cheese, Jalapeno
+Total Cost: ₹290.0
+----------------------------------
+Order 2: Farmhouse Pizza, Extra Cheese, Jalapeno, Olives
+Total Cost: ₹370.0
+```
 
-By implementing the **Decorator Pattern**, we create a **modular, extensible logging system** in a microservices architecture, making debugging and monitoring more efficient.
+---
+
+## **How Decorator Pattern Prevents Class Explosion?**
+Without the **Decorator Pattern**, we would need to create multiple subclasses for every possible combination of pizzas and toppings:
+
+- **MargheritaWithCheese**
+- **MargheritaWithJalapeno**
+- **MargheritaWithOlives**
+- **MargheritaWithCheeseAndJalapeno**
+- **MargheritaWithCheeseAndOlives**
+- **FarmhouseWithCheese**
+- **FarmhouseWithJalapeno**
+- **FarmhouseWithCheeseAndJalapeno**, and so on...
+
+This **"Class Explosion"** problem leads to unnecessary complexity and redundancy. The **Decorator Pattern** solves this by allowing dynamic extension of object behavior at runtime instead of creating separate subclasses.
+
+---
+
+## **Advantages of the Decorator Pattern**
+✔ **Flexibility:** New toppings (features) can be added without modifying existing classes.  
+✔ **Prevents Class Explosion:** No need to create multiple subclasses for every combination.  
+✔ **Open-Closed Principle:** The base class remains unchanged, while new features can be added easily.  
+✔ **Single Responsibility Principle:** Each decorator class has a single responsibility (e.g., adding cheese, adding jalapenos, etc.).
+
+---
+
+## **Conclusion**
+The **Decorator Pattern** is a great way to extend an object's functionality dynamically. In our **Pizza Example**, we can keep adding toppings **without modifying the base class**. This makes the code more **scalable, maintainable, and reusable**.
