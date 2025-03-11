@@ -24,7 +24,7 @@ interface Observer {
 import java.util.ArrayList;
 import java.util.List;
 
-interface Subject {
+interface Observable {
     void addObserver(Observer observer);
     void removeObserver(Observer observer);
     void notifyObservers();
@@ -33,7 +33,7 @@ interface Subject {
 
 ### **Step 3: Implement the Concrete Observable (Product Stock Manager)**
 ```java
-class Product implements Subject {
+class Product implements Observable {
     private List<Observer> observers = new ArrayList<>();
     private String productName;
     private boolean inStock = false;
