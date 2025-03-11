@@ -3,7 +3,15 @@
 ## **1. Factory Pattern**
 
 ### **What is the Factory Pattern?**
-The **Factory Pattern** is a creational design pattern that provides an interface for creating objects but lets subclasses alter the type of objects that will be created. It **hides the object creation logic** and allows flexibility in adding new types.
+The **Factory Pattern** is a **creational design pattern** where object creation is done **on the basis of conditions**. Instead of instantiating objects directly using `new`, we delegate this responsibility to a **factory method**, which returns the appropriate object based on the given condition.
+
+For example:  
+- If a user wants a **Circle**, the factory returns a **Circle object**.  
+- If a user wants a **Rectangle**, the factory returns a **Rectangle object**.  
+
+This makes the code **more maintainable, flexible, and scalable**, as new types can be added without modifying existing client code.
+
+---
 
 ### **Real-Life Example: Shapes Factory**
 Suppose we need to create different types of **shapes** like **Circle, Rectangle, and Square**. Instead of using `new` keyword everywhere, we use a **Shape Factory** to create instances dynamically.
