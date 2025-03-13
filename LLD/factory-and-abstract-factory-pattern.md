@@ -61,22 +61,22 @@ class Square implements Shape {
 
 ```java
 // Shape Factory
-class ShapeFactory {
-    // Factory Method
-    public Shape getShape(String shapeType) {
+ public Shape getShape(String shapeType) {
         if (shapeType == null) {
             return null;
         }
-        if (shapeType.equalsIgnoreCase("CIRCLE")) {
-            return new Circle();
-        } else if (shapeType.equalsIgnoreCase("RECTANGLE")) {
-            return new Rectangle();
-        } else if (shapeType.equalsIgnoreCase("SQUARE")) {
-            return new Square();
+        
+        switch (shapeType.toUpperCase()) {
+            case "CIRCLE":
+                return new Circle();
+            case "RECTANGLE":
+                return new Rectangle();
+            case "SQUARE":
+                return new Square();
+            default:
+                return null;
         }
-        return null;
     }
-}
 ```
 
 ### **Step 4: Client Code**
