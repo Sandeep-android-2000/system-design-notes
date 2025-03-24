@@ -1,7 +1,7 @@
 ### Parking Lot System - Discussion & Design Analysis
 
 #### **Overview**
-The parking lot system is designed to efficiently manage parking spots, vehicle entries, ticket generation, and payment processing. It supports multiple vehicle types and incorporates scalable design principles.
+The parking lot system is designed to efficiently manage parking spots, vehicle entries, ticket generation, and payment processing. It supports multiple vehicle types and incorporates scalable design principles. This document integrates insights from the provided transcript for improved clarity and structure.
 
 ---
 
@@ -10,56 +10,74 @@ The parking lot system is designed to efficiently manage parking spots, vehicle 
 #### **1. Vehicle**
 - Attributes: `vehicleNumber`, `vehicleType (TWO_WHEELER/FOUR_WHEELER)`
 - Represents a vehicle entering the parking lot.
+- Methods: 
+  - `getVehicleNumber()`: Returns the vehicle's registration number.
+  - `getVehicleType()`: Identifies if it’s a two-wheeler or four-wheeler.
 
 #### **2. Ticket**
 - Attributes: `ticketId`, `entryTime`, `parkingSpot`, `price`
-- Generated at the entrance and updated at the exit.
-
+- Methods:
+  - `generateTicket(Vehicle vehicle, ParkingSpot spot)`: Generates a ticket upon vehicle entry.
+  - `calculatePrice()`: Computes the parking fee based on duration and type.
+  
 #### **3. Parking Spot** (Abstract Class)
 - Attributes: `spotId`, `isEmpty`, `allowedVehicleType`
-- Methods: `isEmpty()`, `updateParkingSpace(boolean status)`
+- Methods: 
+  - `isAvailable()`: Checks if the spot is free.
+  - `assignVehicle(Vehicle vehicle)`: Allocates a vehicle to the spot.
+  - `removeVehicle()`: Frees up the spot.
 - Specialized into:
   - `TwoWheelerSpot`
   - `FourWheelerSpot`
 
 #### **4. Parking Manager** (Abstract Class)
 - Manages parking allocation.
+- Attributes: `List<ParkingSpot>`
 - Methods:
-  - `findParkingSpot()`: Finds an available spot.
+  - `findParkingSpot()`: Finds an available spot based on the vehicle type.
   - Implemented by:
     - `TwoWheelerManager`
     - `FourWheelerManager`
 
 #### **5. Parking Manager Factory**
-- Provides the correct parking manager based on vehicle type.
+- Factory class responsible for creating instances of `ParkingManager`.
+- Uses **Factory Pattern** to decide which manager to instantiate based on vehicle type.
 
 #### **6. Entrance Gate**
-- Uses `ParkingManager` to assign spots and generate tickets.
+- Responsibilities:
+  - Uses `ParkingManager` to find an available spot.
+  - Generates a `Ticket` for the vehicle.
 
 #### **7. Exit Gate**
-- Processes exits, calculates cost, updates availability.
+- Responsibilities:
+  - Calculates parking duration.
+  - Computes the fee and processes payment.
+  - Updates the spot status.
 
 ---
 
 ### **Design Pattern Analysis**
 
 #### **1. Factory Pattern**
-- Used in `ParkingManagerFactory` to return the correct parking manager.
+- Implemented in `ParkingManagerFactory` to return appropriate parking manager instances dynamically.
 - Encapsulates object creation, promoting modularity.
 
-#### **2. Strategy Pattern** (Potential Improvement)
-- Parking strategies (Nearest to Entrance, Nearest to Elevator) could be implemented using the Strategy Pattern.
-- Different strategies can be applied dynamically based on user preference.
+#### **2. Strategy Pattern** (Enhancement)
+- Different parking allocation strategies:
+  - **Nearest to Entrance**
+  - **Nearest to Elevator**
+  - **Default Allocation**
+- Implemented using a `ParkingStrategy` interface and multiple concrete strategies.
 
-#### **3. Singleton Pattern** (Potential Improvement)
-- `ParkingManager` could be a Singleton if we want a single instance handling all spots.
+#### **3. Singleton Pattern** (Enhancement)
+- `ParkingManager` could be a Singleton, ensuring a single instance manages all spots.
 
 #### **4. Template Method Pattern**
-- `ParkingSpot` as an abstract class follows this principle by defining common behaviors with specific implementations in subclasses.
+- `ParkingSpot` serves as an abstract class defining common behaviors, with subclasses providing specific implementations.
 
 ---
 
-### **Code Implementation**
+### **Refactored Code Implementation**
 ```java
 import java.util.*;
 
@@ -77,6 +95,14 @@ class Vehicle {
         this.vehicleNumber = vehicleNumber;
         this.vehicleType = vehicleType;
     }
+
+    public String getVehicleNumber() {
+        return vehicleNumber;
+    }
+
+    public VehicleType getVehicleType() {
+        return vehicleType;
+    }
 }
 
 // Ticket class
@@ -85,6 +111,13 @@ class Ticket {
     private Date entryTime;
     private ParkingSpot parkingSpot;
     private double price;
+
+    public Ticket(String ticketId, Date entryTime, ParkingSpot parkingSpot, double price) {
+        this.ticketId = ticketId;
+        this.entryTime = entryTime;
+        this.parkingSpot = parkingSpot;
+        this.price = price;
+    }
 }
 
 // Abstract Parking Spot class
@@ -92,6 +125,18 @@ abstract class ParkingSpot {
     protected String spotId;
     protected boolean isEmpty;
     protected VehicleType allowedVehicleType;
+
+    public boolean isAvailable() {
+        return isEmpty;
+    }
+
+    public void assignVehicle(Vehicle vehicle) {
+        this.isEmpty = false;
+    }
+
+    public void removeVehicle() {
+        this.isEmpty = true;
+    }
 }
 
 class TwoWheelerSpot extends ParkingSpot {}
@@ -128,4 +173,4 @@ public class ParkingLotSystem {
 ---
 
 ### **Conclusion**
-This design ensures **modularity, scalability, and maintainability**. The **Factory Pattern** is implemented, while **Strategy and Singleton Patterns** could further improve the system.
+This design integrates key OOP principles and leverages **Factory, Strategy, Singleton, and Template Method Patterns** for an optimized, maintainable parking lot system. Let me know if further refinements are needed!
