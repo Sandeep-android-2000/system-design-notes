@@ -51,8 +51,8 @@ The parking lot system is designed to efficiently manage parking spots, vehicle 
 #### **7. Exit Gate**
 - Responsibilities:
   - Calculates parking duration.
-  - Computes the fee and processes payment.
-  - Updates the spot status.
+  - Computes the fee using a **Pricing Strategy**.
+  - Processes payment and updates the spot status.
 
 ---
 
@@ -62,14 +62,14 @@ The parking lot system is designed to efficiently manage parking spots, vehicle 
 - Implemented in `ParkingManagerFactory` to return appropriate parking manager instances dynamically.
 - Encapsulates object creation, promoting modularity.
 
-#### **2. Strategy Pattern** (Enhancement)
-- Different parking allocation strategies:
-  - **Nearest to Entrance**
-  - **Nearest to Elevator**
-  - **Default Allocation**
-- Implemented using a `ParkingStrategy` interface and multiple concrete strategies.
+#### **2. Strategy Pattern**
+- Different pricing strategies for vehicle types:
+  - **Two-Wheeler Pricing**
+  - **Four-Wheeler Pricing**
+  - **Mixed Vehicle Pricing**
+- Implemented using a `PricingStrategy` interface and multiple concrete strategies.
 
-#### **3. Singleton Pattern** (Enhancement)
+#### **3. Singleton Pattern**
 - `ParkingManager` could be a Singleton, ensuring a single instance manages all spots.
 
 #### **4. Template Method Pattern**
@@ -80,6 +80,7 @@ The parking lot system is designed to efficiently manage parking spots, vehicle 
 ### **Refactored Code Implementation**
 ```java
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 // Enum for Vehicle Type
 enum VehicleType {
@@ -107,60 +108,67 @@ class Vehicle {
 
 // Ticket class
 class Ticket {
-    private String ticketId;
-    private Date entryTime;
-    private ParkingSpot parkingSpot;
-    private double price;
+    protected String ticketId;
+    protected Date entryTime;
+    protected ParkingSpot parkingSpot;
+    protected double price;
+}
 
-    public Ticket(String ticketId, Date entryTime, ParkingSpot parkingSpot, double price) {
-        this.ticketId = ticketId;
-        this.entryTime = entryTime;
-        this.parkingSpot = parkingSpot;
-        this.price = price;
+// Pricing Strategy Interface
+interface PricingStrategy {
+    double calculatePrice(Date entryTime, Date exitTime, VehicleType vehicleType);
+}
+
+// Two-Wheeler Pricing Strategy
+class TwoWheelerPricingStrategy implements PricingStrategy {
+    private static final double RATE_PER_HOUR = 10.0;
+
+    @Override
+    public double calculatePrice(Date entryTime, Date exitTime, VehicleType vehicleType) {
+        long duration = exitTime.getTime() - entryTime.getTime();
+        long hours = TimeUnit.MILLISECONDS.toHours(duration) + 1;
+        return hours * RATE_PER_HOUR;
     }
 }
 
-// Abstract Parking Spot class
-abstract class ParkingSpot {
-    protected String spotId;
-    protected boolean isEmpty;
-    protected VehicleType allowedVehicleType;
+// Four-Wheeler Pricing Strategy
+class FourWheelerPricingStrategy implements PricingStrategy {
+    private static final double RATE_PER_HOUR = 20.0;
 
-    public boolean isAvailable() {
-        return isEmpty;
-    }
-
-    public void assignVehicle(Vehicle vehicle) {
-        this.isEmpty = false;
-    }
-
-    public void removeVehicle() {
-        this.isEmpty = true;
+    @Override
+    public double calculatePrice(Date entryTime, Date exitTime, VehicleType vehicleType) {
+        long duration = exitTime.getTime() - entryTime.getTime();
+        long hours = TimeUnit.MILLISECONDS.toHours(duration) + 1;
+        return hours * RATE_PER_HOUR;
     }
 }
 
-class TwoWheelerSpot extends ParkingSpot {}
-class FourWheelerSpot extends ParkingSpot {}
+// Pricing Manager
+class PricingManager {
+    private PricingStrategy pricingStrategy;
 
-// Abstract Parking Manager
-abstract class ParkingManager {
-    protected List<ParkingSpot> parkingSpots;
-    public abstract ParkingSpot findParkingSpot();
-}
+    public PricingManager(PricingStrategy pricingStrategy) {
+        this.pricingStrategy = pricingStrategy;
+    }
 
-class TwoWheelerManager extends ParkingManager {}
-class FourWheelerManager extends ParkingManager {}
-
-// Factory for Parking Manager
-class ParkingManagerFactory {
-    public static ParkingManager getParkingManager(VehicleType type, List<ParkingSpot> spots) {
-        return type == VehicleType.TWO_WHEELER ? new TwoWheelerManager() : new FourWheelerManager();
+    public double getParkingPrice(Date entryTime, Date exitTime, VehicleType vehicleType) {
+        return pricingStrategy.calculatePrice(entryTime, exitTime, vehicleType);
     }
 }
 
-// Entrance and Exit Gates
-class EntranceGate {}
-class ExitGate {}
+// Exit Gate - Implements Pricing
+class ExitGate {
+    private PricingManager pricingManager;
+
+    public ExitGate(PricingManager pricingManager) {
+        this.pricingManager = pricingManager;
+    }
+
+    public void processExit(Ticket ticket, Date exitTime) {
+        double price = pricingManager.getParkingPrice(ticket.entryTime, exitTime, ticket.parkingSpot.allowedVehicleType);
+        System.out.println("Total Parking Fee: $" + price);
+    }
+}
 
 // Main Class
 public class ParkingLotSystem {
