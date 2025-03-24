@@ -24,51 +24,72 @@ Each handler either processes the request or forwards it to the next handler in 
 - **Request might not be handled**: If no handler processes the request, it could go unhandled.
 - **Debugging can be difficult**: Tracing the request through multiple handlers can be complex.
 
-## Implementation in Java
+## Implementation in Java (Logger Example)
 ```java
-// Step 1: Define an abstract handler
-abstract class Handler {
-    protected Handler nextHandler;
+// Step 1: Define an abstract logger
+abstract class Logger {
+    protected Logger nextLogger;
     
-    public void setNextHandler(Handler nextHandler) {
-        this.nextHandler = nextHandler;
+    public void setNextLogger(Logger nextLogger) {
+        this.nextLogger = nextLogger;
     }
     
-    public abstract void handleRequest(String request);
+    public void logMessage(int level, String message) {
+        if (canHandle(level)) {
+            write(message);
+        } else if (nextLogger != null) {
+            nextLogger.logMessage(level, message);
+        }
+    }
+    
+    protected abstract boolean canHandle(int level);
+    protected abstract void write(String message);
 }
 
-// Step 2: Create concrete handlers
-class ConcreteHandlerA extends Handler {
-    public void handleRequest(String request) {
-        if (request.equals("A")) {
-            System.out.println("Handler A processed request");
-        } else if (nextHandler != null) {
-            nextHandler.handleRequest(request);
-        }
+// Step 2: Create concrete loggers
+class InfoLogger extends Logger {
+    protected boolean canHandle(int level) {
+        return level == 1;
+    }
+    
+    protected void write(String message) {
+        System.out.println("INFO: " + message);
     }
 }
 
-class ConcreteHandlerB extends Handler {
-    public void handleRequest(String request) {
-        if (request.equals("B")) {
-            System.out.println("Handler B processed request");
-        } else if (nextHandler != null) {
-            nextHandler.handleRequest(request);
-        }
+class DebugLogger extends Logger {
+    protected boolean canHandle(int level) {
+        return level == 2;
+    }
+    
+    protected void write(String message) {
+        System.out.println("DEBUG: " + message);
+    }
+}
+
+class ErrorLogger extends Logger {
+    protected boolean canHandle(int level) {
+        return level == 3;
+    }
+    
+    protected void write(String message) {
+        System.out.println("ERROR: " + message);
     }
 }
 
 // Step 3: Client usage
 public class ChainOfResponsibilityExample {
     public static void main(String[] args) {
-        Handler handlerA = new ConcreteHandlerA();
-        Handler handlerB = new ConcreteHandlerB();
+        Logger errorLogger = new ErrorLogger();
+        Logger debugLogger = new DebugLogger();
+        Logger infoLogger = new InfoLogger();
         
-        handlerA.setNextHandler(handlerB);
+        infoLogger.setNextLogger(debugLogger);
+        debugLogger.setNextLogger(errorLogger);
         
-        handlerA.handleRequest("A"); // Processed by A
-        handlerA.handleRequest("B"); // Passed to B and processed
-        handlerA.handleRequest("C"); // Not handled
+        infoLogger.logMessage(1, "This is an info message"); // Handled by InfoLogger
+        infoLogger.logMessage(2, "This is a debug message"); // Passed to DebugLogger
+        infoLogger.logMessage(3, "This is an error message"); // Passed to ErrorLogger
     }
 }
 ```
@@ -80,4 +101,3 @@ public class ChainOfResponsibilityExample {
 
 ## Conclusion
 The **Chain of Responsibility** pattern is useful for scenarios where multiple objects can handle a request dynamically. It enhances code maintainability by reducing direct dependencies between objects.
-
