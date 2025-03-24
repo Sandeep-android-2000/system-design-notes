@@ -1,195 +1,131 @@
-# Low-Level Design (LLD) of Parking Lot
+### Parking Lot System - Discussion & Design Analysis
 
-## Step 1: Requirement Gathering
-
-### Basic Flow:
-1. A **vehicle** arrives at the **entrance gate**.
-2. The **entrance gate** assigns a **parking spot** using a **ParkingSpotManager**.
-3. The **vehicle** parks in the assigned **parking spot**.
-4. At exit, the **total charge** is calculated based on **time parked**.
-5. The **parking spot** is freed after payment.
-
-### Key Enhancements:
-1. **Scalability**: Supports **multiple** entrance and exit gates.
-2. **Vehicle Types**: Supports **2-Wheeler, 3-Wheeler, and 4-Wheeler**.
-3. **Charging Mechanism**: Mix of **Hourly-based / Minute-based** pricing.
-4. **Nearest Spot Allocation** using **ParkingStrategy** (Strategy Pattern).
-5. **Factory Pattern** to create appropriate **ParkingSpotManager**.
+#### **Overview**
+The parking lot system is designed to efficiently manage parking spots, vehicle entries, ticket generation, and payment processing. It supports multiple vehicle types and incorporates scalable design principles.
 
 ---
 
-## Step 2: Identify Key Objects
+### **Key Components & Responsibilities**
 
-### Main Classes & Their Relationships
+#### **1. Vehicle**
+- Attributes: `vehicleNumber`, `vehicleType (TWO_WHEELER/FOUR_WHEELER)`
+- Represents a vehicle entering the parking lot.
 
-| Object                 | Description |
-|------------------------|-------------|
-| **Vehicle**           | Represents a vehicle with `vehicleNumber` and `vehicleType` (enum: 2W, 3W, 4W). |
-| **ParkingSpot (Abstract Class)** | Parent class for all parking spot types. |
-| **TwoWheelerSpot, ThreeWheelerSpot, FourWheelerSpot** | Specific parking spot types inheriting `ParkingSpot`. |
-| **ParkingSpotManager (Abstract Class)** | Manages parking spots, contains `findParkingSpace()`, `addParkingSpace()`, etc. |
-| **TwoWheelerParkingManager, FourWheelerParkingManager** | Specialized managers for different vehicle types. |
-| **ParkingStrategy (Interface)** | Defines the strategy to find a parking space. |
-| **NearToEntrance, NearToElevator, DefaultParkingStrategy** | Implement different **strategies** for parking spot allocation. |
-| **ParkingSpotFactory** | Factory Pattern for creating **ParkingSpotManager**. |
-| **Ticket** | Holds `entryTime`, `vehicle`, and `parkingSpot`. |
-| **EntranceGate** | Uses **ParkingSpotFactory** to allocate parking spots. |
-| **ExitGate** | Calculates parking cost and frees up spots. |
+#### **2. Ticket**
+- Attributes: `ticketId`, `entryTime`, `parkingSpot`, `price`
+- Generated at the entrance and updated at the exit.
+
+#### **3. Parking Spot** (Abstract Class)
+- Attributes: `spotId`, `isEmpty`, `allowedVehicleType`
+- Methods: `isEmpty()`, `updateParkingSpace(boolean status)`
+- Specialized into:
+  - `TwoWheelerSpot`
+  - `FourWheelerSpot`
+
+#### **4. Parking Manager** (Abstract Class)
+- Manages parking allocation.
+- Methods:
+  - `findParkingSpot()`: Finds an available spot.
+  - Implemented by:
+    - `TwoWheelerManager`
+    - `FourWheelerManager`
+
+#### **5. Parking Manager Factory**
+- Provides the correct parking manager based on vehicle type.
+
+#### **6. Entrance Gate**
+- Uses `ParkingManager` to assign spots and generate tickets.
+
+#### **7. Exit Gate**
+- Processes exits, calculates cost, updates availability.
 
 ---
 
-## Step 3: Class Definitions (Java)
+### **Design Pattern Analysis**
 
+#### **1. Factory Pattern**
+- Used in `ParkingManagerFactory` to return the correct parking manager.
+- Encapsulates object creation, promoting modularity.
+
+#### **2. Strategy Pattern** (Potential Improvement)
+- Parking strategies (Nearest to Entrance, Nearest to Elevator) could be implemented using the Strategy Pattern.
+- Different strategies can be applied dynamically based on user preference.
+
+#### **3. Singleton Pattern** (Potential Improvement)
+- `ParkingManager` could be a Singleton if we want a single instance handling all spots.
+
+#### **4. Template Method Pattern**
+- `ParkingSpot` as an abstract class follows this principle by defining common behaviors with specific implementations in subclasses.
+
+---
+
+### **Code Implementation**
 ```java
-// Example implementation of Vehicle class
+import java.util.*;
+
+// Enum for Vehicle Type
+enum VehicleType {
+    TWO_WHEELER, FOUR_WHEELER
+}
+
+// Vehicle class
 class Vehicle {
     private String vehicleNumber;
-    private VehicleType type;
+    private VehicleType vehicleType;
 
-    public Vehicle(String vehicleNumber, VehicleType type) {
+    public Vehicle(String vehicleNumber, VehicleType vehicleType) {
         this.vehicleNumber = vehicleNumber;
-        this.type = type;
-    }
-
-    public String getVehicleNumber() {
-        return vehicleNumber;
-    }
-
-    public VehicleType getType() {
-        return type;
+        this.vehicleType = vehicleType;
     }
 }
 
-// Abstract ParkingSpot class
-abstract class ParkingSpot {
-    protected int id;
-    protected boolean isEmpty;
-    protected Vehicle vehicle;
-
-    public ParkingSpot(int id) {
-        this.id = id;
-        this.isEmpty = true;
-    }
-
-    public boolean isAvailable() {
-        return isEmpty;
-    }
-
-    public void assignVehicle(Vehicle vehicle) {
-        this.vehicle = vehicle;
-        this.isEmpty = false;
-    }
-
-    public void removeVehicle() {
-        this.vehicle = null;
-        this.isEmpty = true;
-    }
-}
-
-// Concrete Parking Spot types
-class TwoWheelerSpot extends ParkingSpot {
-    public TwoWheelerSpot(int id) {
-        super(id);
-    }
-}
-
-class FourWheelerSpot extends ParkingSpot {
-    public FourWheelerSpot(int id) {
-        super(id);
-    }
-}
-
-// Strategy Pattern for Parking
-interface ParkingStrategy {
-    ParkingSpot findSpace(List<ParkingSpot> spots);
-}
-
-class NearToEntrance implements ParkingStrategy {
-    public ParkingSpot findSpace(List<ParkingSpot> spots) {
-        for (ParkingSpot spot : spots) {
-            if (spot.isAvailable()) {
-                return spot;
-            }
-        }
-        return null;
-    }
-}
-
-// Parking Spot Factory (Factory Pattern)
-class ParkingSpotFactory {
-    public static ParkingSpot getParkingSpot(VehicleType type, int id) {
-        if (type == VehicleType.TWO_WHEELER) {
-            return new TwoWheelerSpot(id);
-        } else if (type == VehicleType.FOUR_WHEELER) {
-            return new FourWheelerSpot(id);
-        }
-        return null;
-    }
-}
-
-// Ticket class with Has-A relationship with Vehicle and ParkingSpot
+// Ticket class
 class Ticket {
     private String ticketId;
-    private LocalDateTime entryTime;
-    private Vehicle vehicle;
+    private Date entryTime;
     private ParkingSpot parkingSpot;
+    private double price;
+}
 
-    public Ticket(String ticketId, LocalDateTime entryTime, Vehicle vehicle, ParkingSpot parkingSpot) {
-        this.ticketId = ticketId;
-        this.entryTime = entryTime;
-        this.vehicle = vehicle;
-        this.parkingSpot = parkingSpot;
+// Abstract Parking Spot class
+abstract class ParkingSpot {
+    protected String spotId;
+    protected boolean isEmpty;
+    protected VehicleType allowedVehicleType;
+}
+
+class TwoWheelerSpot extends ParkingSpot {}
+class FourWheelerSpot extends ParkingSpot {}
+
+// Abstract Parking Manager
+abstract class ParkingManager {
+    protected List<ParkingSpot> parkingSpots;
+    public abstract ParkingSpot findParkingSpot();
+}
+
+class TwoWheelerManager extends ParkingManager {}
+class FourWheelerManager extends ParkingManager {}
+
+// Factory for Parking Manager
+class ParkingManagerFactory {
+    public static ParkingManager getParkingManager(VehicleType type, List<ParkingSpot> spots) {
+        return type == VehicleType.TWO_WHEELER ? new TwoWheelerManager() : new FourWheelerManager();
     }
 }
 
-// Entrance Gate
-class EntranceGate {
-    private ParkingSpotFactory factory;
+// Entrance and Exit Gates
+class EntranceGate {}
+class ExitGate {}
 
-    public EntranceGate(ParkingSpotFactory factory) {
-        this.factory = factory;
-    }
-
-    public Ticket generateTicket(Vehicle vehicle, int spotId) {
-        ParkingSpot spot = factory.getParkingSpot(vehicle.getType(), spotId);
-
-        if (spot == null) {
-            System.out.println("No parking space available.");
-            return null;
-        }
-
-        spot.assignVehicle(vehicle);
-        return new Ticket("TCKT-" + System.currentTimeMillis(), LocalDateTime.now(), vehicle, spot);
-    }
-}
-
-// Exit Gate
-class ExitGate {
-    public double calculateCost(Ticket ticket) {
-        long minutes = Duration.between(ticket.getEntryTime(), LocalDateTime.now()).toMinutes();
-        return minutes * 2.0; // Example rate per minute
-    }
-
-    public void processExit(Ticket ticket) {
-        double cost = calculateCost(ticket);
-        System.out.println("Total cost: $" + cost);
-        ticket.getParkingSpot().removeVehicle();
+// Main Class
+public class ParkingLotSystem {
+    public static void main(String[] args) {
+        // Sample Implementation
     }
 }
 ```
 
-## Summary
+---
 
-### ✅ Scalability
-   - Supports **multiple** entrance & exit gates.
-   - **Factory Pattern** for **ParkingSpotManager**.
-
-### ✅ Supports Different Vehicle Types
-   - **2-Wheeler, 3-Wheeler, 4-Wheeler**.
-
-### ✅ Strategy Pattern for Spot Allocation
-   - **NearToEntrance, NearToElevator, Default Strategy**.
-
-### ✅ Factory Pattern for Parking Spot Management
-   - Dynamic creation of **ParkingSpotManager**.
-
+### **Conclusion**
+This design ensures **modularity, scalability, and maintainability**. The **Factory Pattern** is implemented, while **Strategy and Singleton Patterns** could further improve the system.
