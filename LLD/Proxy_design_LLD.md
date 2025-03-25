@@ -105,21 +105,51 @@ Displaying image: test_image.jpg
 ```
 
 ## Use Cases
-- **Security**: Control access to sensitive resources.
-- **Performance Optimization**: Avoid expensive object creation.
-- **Remote Proxy**: Represent an object located on a remote server.
-- **Logging & Monitoring**: Track requests to an object.
-- **Lazy Initialization**: Load objects only when needed.
+1. **Access Restriction**: Proxies can be used to control access to sensitive objects, ensuring that only authorized users can interact with them.
+2. **Caching**: A proxy can store expensive computations or database results to return precomputed values instead of recalculating them.
+3. **Preprocessing and Postprocessing**: Proxies can add extra logic before and after method calls, such as logging, performance monitoring, or security checks.
+
+### Real-life Use Case in Spring Boot
+One practical use of the Proxy Design Pattern in Spring Boot is during the **bean creation process**. When creating beans, Spring uses proxies (like CGLIB or JDK dynamic proxies) to enable features such as:
+- **Transaction management**: Spring wraps beans with proxies to manage transactions seamlessly.
+- **Lazy initialization**: Proxies allow the deferred instantiation of beans.
+- **AOP (Aspect-Oriented Programming)**: Proxies enable method interception for cross-cutting concerns like logging and security.
+
+Example:
+```java
+@Component
+public class MyService {
+    public void performOperation() {
+        System.out.println("Performing operation");
+    }
+}
+
+@Configuration
+@EnableAspectJAutoProxy
+class AppConfig {
+}
+
+@Aspect
+@Component
+class LoggingAspect {
+    @Before("execution(* MyService.performOperation(..))")
+    public void logBefore() {
+        System.out.println("Logging before method execution");
+    }
+}
+```
+Here, **Spring AOP creates a proxy around `MyService`** to intercept method calls and add logging before execution.
 
 ## Advantages
 - Reduces memory and resource usage by delaying object creation.
 - Provides an additional layer of security.
 - Enhances logging and access control.
+- Supports performance optimizations like caching.
 
 ## Disadvantages
 - Adds complexity to the system.
 - May introduce slight performance overhead.
 
 ## Conclusion
-The **Proxy Design Pattern** is a powerful technique for controlling access, optimizing resource usage, and adding additional functionality to objects. It is widely used in various scenarios such as security, caching, and remote method invocation.
+The **Proxy Design Pattern** is a powerful technique for controlling access, optimizing resource usage, and adding additional functionality to objects. It is widely used in various scenarios such as security, caching, and remote method invocation. In Spring Boot, proxies are essential for managing transactions, AOP, and lazy initialization.
 
