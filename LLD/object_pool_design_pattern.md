@@ -69,13 +69,95 @@ pool.returnObject(obj1); // Reuse it later
 
 ---
 
+## 🚀 Advanced Example: Database Connection Pool with Singleton and Thread-Safety
+
+When dealing with database connections, object pooling becomes extremely useful.
+
+Here’s an **optimized** version:
+
+```java
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+
+public class DBConnectionPool {
+
+    private static DBConnectionPool instance;
+    private static final int MAX_POOL_SIZE = 5;
+    private BlockingQueue<Connection> connectionPool;
+
+    private DBConnectionPool() {
+        connectionPool = new LinkedBlockingQueue<>(MAX_POOL_SIZE);
+        initializeConnections();
+    }
+
+    // Singleton Instance (Thread Safe with synchronized block)
+    public static DBConnectionPool getInstance() {
+        if (instance == null) {
+            synchronized (DBConnectionPool.class) {
+                if (instance == null) {
+                    instance = new DBConnectionPool();
+                }
+            }
+        }
+        return instance;
+    }
+
+    private void initializeConnections() {
+        try {
+            for (int i = 0; i < MAX_POOL_SIZE; i++) {
+                Connection conn = DriverManager.getConnection(
+                    "jdbc:mysql://localhost:3306/yourdb", "username", "password");
+                connectionPool.offer(conn);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public Connection borrowConnection() throws InterruptedException {
+        return connectionPool.take(); // waits if pool is empty
+    }
+
+    public void returnConnection(Connection connection) {
+        if (connection != null) {
+            connectionPool.offer(connection);
+        }
+    }
+}
+```
+
+**Usage:**
+
+```java
+public class App {
+    public static void main(String[] args) {
+        try {
+            DBConnectionPool pool = DBConnectionPool.getInstance();
+            Connection conn = pool.borrowConnection();
+
+            // Use the connection (execute queries)
+
+            pool.returnConnection(conn); // Return it back to the pool
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+---
+
 ## ⚡ Advantages
 - Faster performance (no repeated creation/destruction)
 - Saves memory
-- Useful when many similar objects are needed
+- Singleton ensures one pool for the entire application
+- Thread-safe (multiple threads can safely borrow/return objects)
 
 ## ⚠️ Disadvantages
 - Managing the pool correctly can be tricky
-- Risk of objects becoming stale if not reset properly
+- Risk of stale or invalid objects if not reset properly
 
 ---
