@@ -118,5 +118,6 @@ Student s = Student.builder()
 
 ## 📘 UML Diagram
 
-![Builder UML Diagram](sandbox:/mnt/data/A_UML_(Unified_Modeling_Language)_class_diagram_in.png)
+![Builder UML Diagram](<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABAAAAAQACAIAAADwf7zUAADZP2NhQlgAANk/anVtYgAAAB5qdW1kYzJwYQARABCAAACqADibcQNjMnBhAAAANxNqdW1iAAAAR2p1bWRjMm1hABEAEIAAAKoAOJtxA3VybjpjMnBhOmQ0Y2VkNGI2LTdhMjUtNGMzMC1hNmI0LTVhMjE1YTc0Y2IxOQAAAAHhanVtYgAAAClqdW1kYzJhcwARABCAAACqADibcQNjMnBhLmFzc2VydGlvbnMAAA..." />
+)
 
