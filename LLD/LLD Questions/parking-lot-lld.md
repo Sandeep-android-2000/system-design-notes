@@ -1,341 +1,504 @@
-### Parking Lot System - Discussion & Design Analysis
+# Parking Lot LLD (Beginner-Friendly)  
+### With 2-Wheeler, 3-Wheeler, 4-Wheeler, Heavy Utility Vehicle (HUV)  
+### Includes Simple Price Calculation Strategy
 
-#### **Overview**
-The parking lot system is designed to efficiently manage parking spots, vehicle entries, ticket generation, and payment processing. It supports multiple vehicle types and incorporates scalable design principles. This document integrates insights from the provided transcript for improved clarity and structure.
+This is a **beginner‑friendly** Low-Level Design of a Parking Lot System with simplified vehicle categories and pricing strategies. It includes:
 
----
-
-### **Key Components & Responsibilities**
-
-#### **1. Vehicle**
-- Attributes: `vehicleNumber`, `vehicleType (TWO_WHEELER/FOUR_WHEELER)`
-- Represents a vehicle entering the parking lot.
-- Methods: 
-  - `getVehicleNumber()`: Returns the vehicle's registration number.
-  - `getVehicleType()`: Identifies if it’s a two-wheeler or four-wheeler.
-
-#### **2. Ticket**
-- Attributes: `ticketId`, `entryTime`, `parkingSpot`, `price`
-- Methods:
-  - `generateTicket(Vehicle vehicle, ParkingSpot spot)`: Generates a ticket upon vehicle entry.
-  - `calculatePrice()`: Computes the parking fee based on duration and type.
-  
-#### **3. Parking Spot** (Abstract Class)
-- Attributes: `spotId`, `isEmpty`, `allowedVehicleType`
-- Methods: 
-  - `isAvailable()`: Checks if the spot is free.
-  - `assignVehicle(Vehicle vehicle)`: Allocates a vehicle to the spot.
-  - `removeVehicle()`: Frees up the spot.
-- Specialized into:
-  - `TwoWheelerSpot`
-  - `FourWheelerSpot`
-
-#### **4. Parking Manager** (Abstract Class)
-- Manages parking allocation.
-- Attributes: `List<ParkingSpot>`
-- Methods:
-  - `findParkingSpot()`: Finds an available spot based on the vehicle type.
-  - Implemented by:
-    - `TwoWheelerManager`
-    - `FourWheelerManager`
-
-#### **5. Parking Manager Factory**
-- Factory class responsible for creating instances of `ParkingManager`.
-- Uses **Factory Pattern** to decide which manager to instantiate based on vehicle type.
-
-#### **6. Entrance Gate**
-- Responsibilities:
-  - Uses `ParkingManager` to find an available spot.
-  - Generates a `Ticket` for the vehicle.
-
-#### **7. Exit Gate**
-- Responsibilities:
-  - Calculates parking duration.
-  - Computes the fee using a **Pricing Strategy**.
-  - Processes payment and updates the spot status.
+- Requirements  
+- Entities  
+- Relationships  
+- UML (PlantUML)  
+- Full Java Code  
+- Designed for beginners  
 
 ---
 
-### **Design Pattern Analysis**
+# 1. Requirements
 
-#### **1. Factory Pattern**
-- Implemented in `ParkingManagerFactory` to return appropriate parking manager instances dynamically.
-- Encapsulates object creation, promoting modularity.
+## Functional
+1. System must support **vehicle types**:
+   - **2-Wheeler** (bike, scooter)
+   - **3-Wheeler** (auto)
+   - **4-Wheeler** (car, small van)
+   - **HUV (Heavy Utility Vehicle)** (bus, truck)
 
-#### **2. Strategy Pattern**
-- Different pricing strategies for vehicle types:
-  - **Two-Wheeler Pricing**
-  - **Four-Wheeler Pricing**
-  - **Mixed Vehicle Pricing**
-- Implemented using a `PricingStrategy` interface and multiple concrete strategies.
+2. Parking spot types:
+   - TW_SPOT (2-wheeler)
+   - THW_SPOT (3-wheeler)
+   - FW_SPOT (4-wheeler)
+   - HUV_SPOT (heavy vehicles)
 
-#### **3. Singleton Pattern**
-- `ParkingManager` could be a Singleton, ensuring a single instance manages all spots.
+3. Entry Gate:
+   - Assigns the correct parking spot.
+   - Generates a ticket.
 
-#### **4. Template Method Pattern**
-- `ParkingSpot` serves as an abstract class defining common behaviors, with subclasses providing specific implementations.
+4. Exit Gate:
+   - Computes price.
+   - Frees the spot.
+
+5. Ticket contains:
+   - Vehicle details
+   - Spot assigned
+   - Entry time
+   - Exit time
+   - Price
+
+## Non‑Functional
+- Easy for beginners to understand.
+- Clean extensible OOP design.
+- Console-based sample run.
 
 ---
 
-### **Refactored Code Implementation**
-```java
-import java.util.*;
-import java.util.concurrent.TimeUnit;
+# 2. Entities & Responsibilities
 
-// ===========================
-// ENUM: Vehicle Type
-// ===========================
-enum VehicleType {
-    TWO_WHEELER, FOUR_WHEELER
+### Vehicle
+Represents a vehicle. Types:
+- TwoWheeler
+- ThreeWheeler
+- FourWheeler
+- HUV
+
+### ParkingSpot
+Each spot has:
+- id
+- spotType
+- occupied or not
+
+### Ticket
+Contains:
+- ticketId
+- vehicle
+- parkingSpot
+- entryTime
+- exitTime
+- price
+
+### EntryGate
+Handles:
+- park vehicle
+- generate ticket
+
+### ExitGate
+Handles:
+- unpark vehicle
+- calculate price
+
+### PriceCalculationStrategy
+Strategy pattern:
+- TwoWheelerPricing
+- ThreeWheelerPricing
+- FourWheelerPricing
+- HUVPricing
+
+### ParkingManager
+Admin functions:
+- View floor status
+
+---
+
+# 3. UML Diagram (PlantUML)
+
+```plantuml
+@startuml
+interface PriceStrategy {
+  + calculatePrice(durationHours: long): double
 }
 
-// ===========================
-// Vehicle
-// ===========================
-class Vehicle {
-    private String vehicleNumber;
-    private VehicleType vehicleType;
+class TwoWheelerPricing implements PriceStrategy
+class ThreeWheelerPricing implements PriceStrategy
+class FourWheelerPricing implements PriceStrategy
+class HUVPricing implements PriceStrategy
 
-    public Vehicle(String vehicleNumber, VehicleType vehicleType) {
-        this.vehicleNumber = vehicleNumber;
-        this.vehicleType = vehicleType;
-    }
-
-    public String getVehicleNumber() {
-        return vehicleNumber;
-    }
-
-    public VehicleType getVehicleType() {
-        return vehicleType;
-    }
+abstract class Vehicle {
+  - regNo: String
+  - color: String
+  + getType(): VehicleType
 }
 
-// ===========================
-// Parking Spot
-// ===========================
+class TwoWheeler extends Vehicle
+class ThreeWheeler extends Vehicle
+class FourWheeler extends Vehicle
+class HUV extends Vehicle
+
+enum VehicleType { TWO_WHEELER, THREE_WHEELER, FOUR_WHEELER, HUV }
+
 class ParkingSpot {
-    protected int id;
-    protected boolean isFree;
-    protected VehicleType allowedVehicleType;
-
-    public ParkingSpot(int id, VehicleType allowedVehicleType) {
-        this.id = id;
-        this.allowedVehicleType = allowedVehicleType;
-        this.isFree = true;
-    }
-
-    public boolean isFree() {
-        return isFree;
-    }
-
-    public void occupySpot() {
-        isFree = false;
-    }
-
-    public void freeSpot() {
-        isFree = true;
-    }
-
-    public VehicleType getAllowedVehicleType() {
-        return allowedVehicleType;
-    }
-
-    public int getId() {
-        return id;
-    }
+  - id: String
+  - type: SpotType
+  - occupied: boolean
 }
 
-// ===========================
-// Spot Manager
-// ===========================
-class ParkingSpotManager {
-    private Queue<ParkingSpot> twoWheelerSpots;
-    private Queue<ParkingSpot> fourWheelerSpots;
-
-    public ParkingSpotManager(int twoWheelers, int fourWheelers) {
-        twoWheelerSpots = new LinkedList<>();
-        fourWheelerSpots = new LinkedList<>();
-
-        // create spots
-        for (int i = 1; i <= twoWheelers; i++) {
-            twoWheelerSpots.add(new ParkingSpot(i, VehicleType.TWO_WHEELER));
-        }
-        for (int i = 1; i <= fourWheelers; i++) {
-            fourWheelerSpots.add(new ParkingSpot(i + 100, VehicleType.FOUR_WHEELER));
-        }
-    }
-
-    public ParkingSpot assignSpot(VehicleType type) {
-        if (type == VehicleType.TWO_WHEELER && !twoWheelerSpots.isEmpty()) {
-            ParkingSpot spot = twoWheelerSpots.poll();
-            spot.occupySpot();
-            return spot;
-        }
-
-        if (type == VehicleType.FOUR_WHEELER && !fourWheelerSpots.isEmpty()) {
-            ParkingSpot spot = fourWheelerSpots.poll();
-            spot.occupySpot();
-            return spot;
-        }
-
-        return null; // no spot available
-    }
-
-    public void freeSpot(ParkingSpot spot) {
-        spot.freeSpot();
-
-        if (spot.getAllowedVehicleType() == VehicleType.TWO_WHEELER)
-            twoWheelerSpots.offer(spot);
-        else
-            fourWheelerSpots.offer(spot);
-    }
-}
-
-// ===========================
-// Ticket
-// ===========================
 class Ticket {
-    protected String ticketId;
-    protected Date entryTime;
-    protected ParkingSpot parkingSpot;
-    protected Vehicle vehicle;
-
-    public Ticket(String ticketId, Vehicle vehicle, ParkingSpot spot, Date entryTime) {
-        this.ticketId = ticketId;
-        this.vehicle = vehicle;
-        this.parkingSpot = spot;
-        this.entryTime = entryTime;
-    }
+  - ticketId: String
+  - vehicle: Vehicle
+  - spot: ParkingSpot
+  - entryTime: LocalDateTime
+  - exitTime: LocalDateTime
 }
 
-// ===========================
-// Pricing Strategy
-// ===========================
-interface PricingStrategy {
-    double calculatePrice(Date entryTime, Date exitTime, VehicleType vehicleType);
-}
-
-class TwoWheelerPricingStrategy implements PricingStrategy {
-    private static final double RATE_PER_HOUR = 10.0;
-
-    @Override
-    public double calculatePrice(Date entryTime, Date exitTime, VehicleType vehicleType) {
-        long duration = exitTime.getTime() - entryTime.getTime();
-        long hours = TimeUnit.MILLISECONDS.toHours(duration) + 1;
-        return hours * RATE_PER_HOUR;
-    }
-}
-
-class FourWheelerPricingStrategy implements PricingStrategy {
-    private static final double RATE_PER_HOUR = 20.0;
-
-    @Override
-    public double calculatePrice(Date entryTime, Date exitTime, VehicleType vehicleType) {
-        long duration = exitTime.getTime() - entryTime.getTime();
-        long hours = TimeUnit.MILLISECONDS.toHours(duration) + 1;
-        return hours * RATE_PER_HOUR;
-    }
-}
-
-// ===========================
-// Pricing Manager
-// ===========================
-class PricingManager {
-    public double getParkingPrice(Date entryTime, Date exitTime, VehicleType type) {
-        PricingStrategy strategy;
-
-        if (type == VehicleType.TWO_WHEELER)
-            strategy = new TwoWheelerPricingStrategy();
-        else
-            strategy = new FourWheelerPricingStrategy();
-
-        return strategy.calculatePrice(entryTime, exitTime, type);
-    }
-}
-
-// ===========================
-// Entry Gate
-// ===========================
 class EntryGate {
-    private ParkingSpotManager spotManager;
-
-    public EntryGate(ParkingSpotManager spotManager) {
-        this.spotManager = spotManager;
-    }
-
-    public Ticket generateTicket(Vehicle vehicle) {
-        ParkingSpot spot = spotManager.assignSpot(vehicle.getVehicleType());
-        if (spot == null) {
-            System.out.println("No spot available!");
-            return null;
-        }
-
-        String ticketId = UUID.randomUUID().toString();
-        Date entryTime = new Date();
-
-        System.out.println("Spot " + spot.getId() + " assigned.");
-
-        return new Ticket(ticketId, vehicle, spot, entryTime);
-    }
+  + parkVehicle(v: Vehicle): Ticket
 }
 
-// ===========================
-// Exit Gate
-// ===========================
 class ExitGate {
-    private PricingManager pricingManager;
-    private ParkingSpotManager spotManager;
-
-    public ExitGate(PricingManager pricingManager, ParkingSpotManager spotManager) {
-        this.pricingManager = pricingManager;
-        this.spotManager = spotManager;
-    }
-
-    public void processExit(Ticket ticket) {
-        Date exitTime = new Date();
-
-        double price = pricingManager.getParkingPrice(
-                ticket.entryTime,
-                exitTime,
-                ticket.vehicle.getVehicleType()
-        );
-
-        System.out.println("Vehicle " + ticket.vehicle.getVehicleNumber() +
-                " parked at spot " + ticket.parkingSpot.getId());
-        System.out.println("Total Parking Fee: ₹" + price);
-
-        spotManager.freeSpot(ticket.parkingSpot);
-    }
+  + unparkVehicle(ticketId: String): double
 }
 
-// ===========================
-// MAIN
-// ===========================
-public class ParkingLotSystem {
-    public static void main(String[] args) throws InterruptedException {
-
-        // create parking spot manager
-        ParkingSpotManager spotManager = new ParkingSpotManager(2, 2);
-
-        EntryGate entryGate = new EntryGate(spotManager);
-        PricingManager pricingManager = new PricingManager();
-        ExitGate exitGate = new ExitGate(pricingManager, spotManager);
-
-        // Vehicle enters
-        Vehicle v1 = new Vehicle("UP32AB1234", VehicleType.FOUR_WHEELER);
-        Ticket t1 = entryGate.generateTicket(v1);
-
-        // WAIT FOR BILLING DEMO
-        Thread.sleep(2000);
-
-        // vehicle exits
-        exitGate.processExit(t1);
-    }
+class ParkingLot {
+  - floors: List<ParkingFloor>
+  - activeTickets: Map<String, Ticket>
 }
 
+@enduml
 ```
 
 ---
 
-### **Conclusion**
-This design integrates key OOP principles and leverages **Factory, Strategy, Singleton, and Template Method Patterns** for an optimized, maintainable parking lot system. Let me know if further refinements are needed!
+# 4. Beginner-Friendly Explanation of Pricing Strategy
+
+We use **Strategy Pattern** because:
+
+- Each vehicle type has different pricing.
+- If tomorrow we introduce EV pricing — easy to add.
+- No `if-else-if-else` mess inside ExitGate.
+
+### Simple Pricing:
+| Vehicle Type | Hourly Price |
+|--------------|--------------|
+| 2-Wheeler    | ₹10/hour     |
+| 3-Wheeler    | ₹15/hour     |
+| 4-Wheeler    | ₹25/hour     |
+| HUV          | ₹50/hour     |
+
+Minimum charge = **1 hour**.
+
+---
+
+# 5. 💻 Full Java Code (Beginner-Friendly)
+
+```java
+import java.time.*;
+import java.util.*;
+
+// ===========================================================
+// MAIN DEMO CLASS
+// ===========================================================
+public class ParkingLotSystem {
+
+    public static void main(String[] args) throws InterruptedException {
+
+        ParkingLot lot = new ParkingLot();
+
+        // Add floors
+        lot.addFloor(new ParkingFloor(1, 5, 5, 5, 2));
+
+        // Vehicles
+        Vehicle v1 = new TwoWheeler("TW-101", "Red");
+        Vehicle v2 = new ThreeWheeler("THW-301", "Yellow");
+        Vehicle v3 = new FourWheeler("CAR-999", "Blue");
+        Vehicle v4 = new HUV("TRK-808", "Black");
+
+        Ticket t1 = lot.getEntryGate().parkVehicle(v1);
+        Ticket t2 = lot.getEntryGate().parkVehicle(v2);
+        Ticket t3 = lot.getEntryGate().parkVehicle(v3);
+
+        Thread.sleep(1200); // simulate time
+
+        System.out.println("Price v1 = " + lot.getExitGate().unparkVehicle(t1.getTicketId()));
+        System.out.println("Price v2 = " + lot.getExitGate().unparkVehicle(t2.getTicketId()));
+
+        lot.getManager().printStatus();
+    }
+}
+
+
+// ===========================================================
+// VEHICLES
+// ===========================================================
+enum VehicleType { TWO_WHEELER, THREE_WHEELER, FOUR_WHEELER, HUV }
+
+abstract class Vehicle {
+    protected String regNo;
+    protected String color;
+
+    public Vehicle(String regNo, String color) {
+        this.regNo = regNo;
+        this.color = color;
+    }
+
+    public abstract VehicleType getType();
+}
+
+class TwoWheeler extends Vehicle {
+    public TwoWheeler(String r, String c) { super(r,c); }
+    public VehicleType getType() { return VehicleType.TWO_WHEELER; }
+}
+
+class ThreeWheeler extends Vehicle {
+    public ThreeWheeler(String r, String c) { super(r,c); }
+    public VehicleType getType() { return VehicleType.THREE_WHEELER; }
+}
+
+class FourWheeler extends Vehicle {
+    public FourWheeler(String r, String c) { super(r,c); }
+    public VehicleType getType() { return VehicleType.FOUR_WHEELER; }
+}
+
+class HUV extends Vehicle {
+    public HUV(String r, String c) { super(r,c); }
+    public VehicleType getType() { return VehicleType.HUV; }
+}
+
+
+// ===========================================================
+// PARKING SPOTS
+// ===========================================================
+enum SpotType { TW_SPOT, THW_SPOT, FW_SPOT, HUV_SPOT }
+
+class ParkingSpot {
+    private String id;
+    private SpotType type;
+    private boolean occupied = false;
+
+    public ParkingSpot(String id, SpotType t) {
+        this.id = id;
+        this.type = t;
+    }
+
+    public boolean assign() {
+        if (occupied) return false;
+        occupied = true;
+        return true;
+    }
+
+    public void release() { occupied = false; }
+
+    public boolean isOccupied() { return occupied; }
+    public SpotType getType() { return type; }
+    public String getId() { return id; }
+}
+
+
+// ===========================================================
+// FLOOR
+// ===========================================================
+class ParkingFloor {
+    private int floorNo;
+    private List<ParkingSpot> spots = new ArrayList<>();
+
+    public ParkingFloor(int floorNo, int tw, int thw, int fw, int huv) {
+        this.floorNo = floorNo;
+
+        createSpots("TW", SpotType.TW_SPOT, tw);
+        createSpots("THW", SpotType.THW_SPOT, thw);
+        createSpots("FW", SpotType.FW_SPOT, fw);
+        createSpots("HUV", SpotType.HUV_SPOT, huv);
+    }
+
+    private void createSpots(String prefix, SpotType type, int count) {
+        for(int i=1;i<=count;i++){
+            spots.add(new ParkingSpot(prefix + "-" + floorNo + "-" + i, type));
+        }
+    }
+
+    public ParkingSpot getAvailableSpot(VehicleType type) {
+        SpotType required = mapVehicleToSpot(type);
+
+        for(ParkingSpot s : spots) {
+            if(!s.isOccupied() && s.getType() == required)
+                return s;
+        }
+        return null;
+    }
+
+    private SpotType mapVehicleToSpot(VehicleType vt) {
+        switch (vt) {
+            case TWO_WHEELER: return SpotType.TW_SPOT;
+            case THREE_WHEELER: return SpotType.THW_SPOT;
+            case FOUR_WHEELER: return SpotType.FW_SPOT;
+            case HUV: return SpotType.HUV_SPOT;
+        }
+        return SpotType.FW_SPOT;
+    }
+
+    public int getFloorNo() { return floorNo; }
+
+    public List<ParkingSpot> getSpots() { return spots; }
+}
+
+
+// ===========================================================
+// TICKET
+// ===========================================================
+class Ticket {
+    private String ticketId;
+    private Vehicle vehicle;
+    private ParkingSpot spot;
+    private LocalDateTime entryTime;
+    private LocalDateTime exitTime;
+    private double price;
+
+    public Ticket(String id, Vehicle v, ParkingSpot s) {
+        this.ticketId = id;
+        this.vehicle = v;
+        this.spot = s;
+        this.entryTime = LocalDateTime.now();
+    }
+
+    public String getTicketId() { return ticketId; }
+    public Vehicle getVehicle() { return vehicle; }
+    public ParkingSpot getSpot() { return spot; }
+    public LocalDateTime getEntryTime() { return entryTime; }
+    public void setExitTime(LocalDateTime t) { exitTime = t; }
+    public void setPrice(double p) { price = p; }
+    public double getPrice() { return price; }
+    public LocalDateTime getExitTime() { return exitTime; }
+}
+
+
+// ===========================================================
+// PRICE STRATEGY PATTERN
+// ===========================================================
+interface PriceStrategy {
+    double calculatePrice(long hours);
+}
+
+class TwoWheelerPricing implements PriceStrategy {
+    public double calculatePrice(long h) { return 10 * Math.max(1, h); }
+}
+
+class ThreeWheelerPricing implements PriceStrategy {
+    public double calculatePrice(long h) { return 15 * Math.max(1, h); }
+}
+
+class FourWheelerPricing implements PriceStrategy {
+    public double calculatePrice(long h) { return 25 * Math.max(1, h); }
+}
+
+class HUVPricing implements PriceStrategy {
+    public double calculatePrice(long h) { return 50 * Math.max(1, h); }
+}
+
+
+// ===========================================================
+// ENTRY GATE
+// ===========================================================
+class EntryGate {
+    private ParkingLot lot;
+
+    public EntryGate(ParkingLot lot) { this.lot = lot; }
+
+    public Ticket parkVehicle(Vehicle v) {
+        ParkingSpot spot = lot.findSpot(v.getType());
+        if (spot == null) {
+            System.out.println("No spot available for " + v.getType());
+            return null;
+        }
+
+        spot.assign();
+        String tid = UUID.randomUUID().toString();
+
+        Ticket t = new Ticket(tid, v, spot);
+        lot.getActiveTickets().put(tid, t);
+
+        System.out.println("Assigned " + v.getRegNo() + " to spot " + spot.getId());
+        return t;
+    }
+}
+
+
+// ===========================================================
+// EXIT GATE
+// ===========================================================
+class ExitGate {
+    private ParkingLot lot;
+
+    public ExitGate(ParkingLot lot) { this.lot = lot; }
+
+    public double unparkVehicle(String ticketId) {
+
+        Ticket t = lot.getActiveTickets().get(ticketId);
+        if (t == null) {
+            System.out.println("Invalid ticket");
+            return 0;
+        }
+
+        t.setExitTime(LocalDateTime.now());
+
+        long minutes = Duration.between(t.getEntryTime(), t.getExitTime()).toMinutes();
+        long hours = Math.max(1, (minutes + 59) / 60);
+
+        PriceStrategy strategy = lot.getPricing(t.getVehicle().getType());
+
+        double price = strategy.calculatePrice(hours);
+        t.setPrice(price);
+
+        t.getSpot().release();
+        lot.getActiveTickets().remove(ticketId);
+
+        return price;
+    }
+}
+
+
+// ===========================================================
+// PARKING LOT MAIN CLASS (FACADE)
+// ===========================================================
+class ParkingLot {
+    private List<ParkingFloor> floors = new ArrayList<>();
+    private Map<String, Ticket> activeTickets = new HashMap<>();
+
+    private EntryGate entryGate = new EntryGate(this);
+    private ExitGate exitGate = new ExitGate(this);
+    private ParkingManager manager = new ParkingManager(this);
+
+    private Map<VehicleType, PriceStrategy> strategyMap = new HashMap<>();
+
+    public ParkingLot() {
+        strategyMap.put(VehicleType.TWO_WHEELER, new TwoWheelerPricing());
+        strategyMap.put(VehicleType.THREE_WHEELER, new ThreeWheelerPricing());
+        strategyMap.put(VehicleType.FOUR_WHEELER, new FourWheelerPricing());
+        strategyMap.put(VehicleType.HUV, new HUVPricing());
+    }
+
+    public void addFloor(ParkingFloor f) { floors.add(f); }
+
+    public ParkingSpot findSpot(VehicleType vt) {
+        for(ParkingFloor f: floors){
+            ParkingSpot s = f.getAvailableSpot(vt);
+            if(s != null) return s;
+        }
+        return null;
+    }
+
+    public PriceStrategy getPricing(VehicleType vt) {
+        return strategyMap.get(vt);
+    }
+
+    public EntryGate getEntryGate() { return entryGate; }
+    public ExitGate getExitGate() { return exitGate; }
+    public ParkingManager getManager() { return manager; }
+    public Map<String, Ticket> getActiveTickets() { return activeTickets; }
+    public List<ParkingFloor> getFloors(){ return floors; }
+}
+
+
+// ===========================================================
+// MANAGER
+// ===========================================================
+class ParkingManager {
+    private ParkingLot lot;
+
+    public ParkingManager(ParkingLot lot) { this.lot = lot; }
+
+    public void printStatus() {
+        System.out.println("------ Parking Status ------");
+        for(ParkingFloor f : lot.getFloors()) {
+            System.out.println("Floor " + f.getFloorNo());
+            long occ = f.getSpots().stream().filter(ParkingSpot::isOccupied).count();
+            System.out.println("Occupied: " + occ + " / " + f.getSpots().size());
+        }
+    }
+}
+```
