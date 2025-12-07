@@ -1,205 +1,214 @@
-# Snake and Ladder Low-Level Design (LLD)
+# Snake and Ladder — Beginner-friendly Design
 
-## Introduction
-This document provides a low-level design (LLD) for the Snake and Ladder game in Java. The design ensures modularity, scalability, and easy extendability.
+This document explains a simple, beginner-friendly design for the classic board game *Snake and Ladder*.
 
-## Requirements Clarification
-1. **Number of Dice**: 1 (but should be scalable).
-2. **Number of Snakes and Ladders**: Should be dynamically configurable.
-3. **Winning Condition**: The game ends as soon as one player reaches the last cell.
+## 1. Requirements
 
-## Object Identification
-- **Dice**: Handles rolling functionality.
-- **Jump (Snake/Ladder)**: Represents a movement jump in the board.
-- **Board**: Consists of cells and manages game logic.
-- **Cell**: Represents a position on the board, potentially with a jump.
-- **Player**: Tracks the player's position.
-- **Game**: Manages the game loop, player turns, and declares a winner.
+### Functional requirements
+1. Support 2 to N players (N >= 2).
+2. Board size is configurable (commonly 10x10 = 100 cells).
+3. Players take turns rolling a dice (1–6) and move forward accordingly.
+4. If a player lands on the start of a ladder, they move up to the ladder's end.
+5. If a player lands on the head of a snake, they move down to the snake's tail.
+6. First player to reach the final cell (exactly) wins.
+7. The game should print moves and the winner.
 
-## Relationships
-- The **game** has a **board**, a **dice**, a **winner**, and a list of **players**.
-- A **jump** denotes either a **snake** or a **ladder** and is associated with a **cell**.
-- The **board** consists of multiple **cells**.
+### Non-functional requirements
+- Simple console-based UI.
+- Clean, modular OOP-based code.
 
-## Class Implementations
+## 2. Key Entities
 
-### Dice
+- **Game** — coordinates gameplay.
+- **Board** — stores cells, snakes, ladders.
+- **Cell** — may contain a jump (snake/ladder).
+- **Player** — stores player name & position.
+- **Dice** — simulates dice roll.
+
+## 3. UML Diagram (PlantUML)
+
+```plantuml
+@startuml
+class Game {
+  - board: Board
+  - players: List<Player>
+  - dice: Dice
+  - currentPlayerIndex: int
+  + start(): void
+}
+
+class Board {
+  - size: int
+  - cells: Map<int, Cell>
+  + getDestination(pos:int): int
+}
+
+class Cell {
+  - index: int
+  - jumpTo: Integer
+}
+
+class Player {
+  - name: String
+  - position: int
+  + move(steps:int): void
+}
+
+class Dice {
+  + roll(): int
+}
+
+Game "1" -- "1" Board
+Game "1" -- "*" Player
+Game "1" -- "1" Dice
+Board "1" -- "*" Cell
+@enduml
+```
+
+## 4. Full Java Code (Runnable)
+
 ```java
 import java.util.*;
-class Dice {
-    private int sides;
-    private Random random;
-    
-    public Dice(int sides) {
-        this.sides = sides;
-        this.random = new Random();
-    }
-    
-    public int roll() {
-        return random.nextInt(sides) + 1;
-    }
-}
-```
 
-### Jump (Snake or Ladder)
-```java
-class Jump {
-    private int start;
-    private int end;
-    
-    public Jump(int start, int end) {
-        this.start = start;
-        this.end = end;
-    }
-    
-    public int getStart() {
-        return start;
-    }
-    
-    public int getEnd() {
-        return end;
-    }
-}
-```
+public class SnakeAndLadder {
 
-### Cell
-```java
-class Cell {
-    private int position;
-    private Jump jump;
-    
-    public Cell(int position) {
-        this.position = position;
-    }
-    
-    public void setJump(Jump jump) {
-        this.jump = jump;
-    }
-    
-    public int getFinalPosition() {
-        return (jump != null) ? jump.getEnd() : position;
-    }
-}
-```
-
-### Board
-```java
-class Board {
-    private int size;
-    private Cell[] cells;
-    
-    public Board(int size, List<Jump> jumps) {
-        this.size = size;
-        cells = new Cell[size + 1];
-        for (int i = 1; i <= size; i++) {
-            cells[i] = new Cell(i);
-        }
-        for (Jump jump : jumps) {
-            cells[jump.getStart()].setJump(jump);
-        }
-    }
-    
-    public int getNewPosition(int currentPosition) {
-        return cells[currentPosition].getFinalPosition();
-    }
-    
-    public int getSize() {
-        return size;
-    }
-}
-```
-
-### Player
-```java
-class Player {
-    private String name;
-    private int position;
-    
-    public Player(String name) {
-        this.name = name;
-        this.position = 1;
-    }
-    
-    public String getName() {
-        return name;
-    }
-    
-    public int getPosition() {
-        return position;
-    }
-    
-    public void setPosition(int position) {
-        this.position = position;
-    }
-}
-```
-
-### Game Logic
-```java
-class SnakeLadderGame {
-    private Board board;
-    private Dice dice;
-    private Queue<Player> players;
-    private Player winner;
-    
-    public SnakeLadderGame(int boardSize, int diceSides, List<Player> players, List<Jump> jumps) {
-        this.board = new Board(boardSize, jumps);
-        this.dice = new Dice(diceSides);
-        this.players = new LinkedList<>(players);
-        this.winner = null;
-    }
-    
-    public void play() {
-        while (winner == null) {
-            Player currentPlayer = players.poll();
-            int diceRoll = dice.roll();
-            int newPosition = currentPlayer.getPosition() + diceRoll;
-            
-            if (newPosition <= board.getSize()) {
-                newPosition = board.getNewPosition(newPosition);
-                currentPlayer.setPosition(newPosition);
-                System.out.println(currentPlayer.getName() + " rolled " + diceRoll + " and moved to " + newPosition);
-                
-                if (newPosition == board.getSize()) {
-                    winner = currentPlayer;
-                }
-            }
-            
-            players.offer(currentPlayer);
-        }
-        System.out.println("Winner is " + winner.getName() + "!");
-    }
-}
-```
-
-### Main Method
-```java
-public class SnakeLadder {
     public static void main(String[] args) {
-        List<Player> players = Arrays.asList(new Player("Alice"), new Player("Bob"));
-        List<Jump> jumps = Arrays.asList(
-            new Jump(3, 22),  // Ladder
-            new Jump(5, 8),   // Ladder
-            new Jump(20, 14), // Snake
-            new Jump(27, 1)   // Snake
-        );
-        
-        SnakeLadderGame game = new SnakeLadderGame(30, 6, players, jumps);
-        game.play();
+        Board board = new Board(100);
+
+        // ladders
+        board.addJump(2, 38);
+        board.addJump(7, 14);
+        board.addJump(8, 31);
+        board.addJump(15, 26);
+        board.addJump(21, 42);
+        board.addJump(28, 84);
+        board.addJump(36, 44);
+        board.addJump(51, 67);
+        board.addJump(71, 91);
+        board.addJump(78, 98);
+        board.addJump(87, 94);
+
+        // snakes
+        board.addJump(16, 6);
+        board.addJump(46, 25);
+        board.addJump(49, 11);
+        board.addJump(62, 19);
+        board.addJump(64, 60);
+        board.addJump(74, 53);
+        board.addJump(89, 68);
+        board.addJump(92, 88);
+        board.addJump(95, 75);
+        board.addJump(99, 80);
+
+        List<Player> players = new ArrayList<>();
+        players.add(new Player("Alice"));
+        players.add(new Player("Bob"));
+
+        Game game = new Game(board, players, new Dice());
+        game.start();
+    }
+
+    // Game Class
+    static class Game {
+        private final Board board;
+        private final List<Player> players;
+        private final Dice dice;
+        private int currentPlayerIndex = 0;
+        private final int WIN_POS;
+
+        public Game(Board board, List<Player> players, Dice dice) {
+            this.board = board;
+            this.players = players;
+            this.dice = dice;
+            this.WIN_POS = board.getSize();
+        }
+
+        public void start() {
+            System.out.println("Starting Snake and Ladder Game with " + players.size() + " players.");
+            boolean won = false;
+
+            while (!won) {
+                Player current = players.get(currentPlayerIndex);
+                int roll = dice.roll();
+                System.out.println(current.getName() + " rolled " + roll);
+
+                int newPos = current.getPosition() + roll;
+
+                if (newPos > WIN_POS) {
+                    System.out.println(current.getName() + " needs exact roll to reach " + WIN_POS);
+                } else {
+                    current.setPosition(newPos);
+                    System.out.println(current.getName() + " moved to " + newPos);
+
+                    int dest = board.getDestination(newPos);
+                    if (dest != -1 && dest != newPos) {
+                        if (dest > newPos) {
+                            System.out.println("Ladder! " + current.getName() + " climbs to " + dest);
+                        } else {
+                            System.out.println("Snake! " + current.getName() + " slides to " + dest);
+                        }
+                        current.setPosition(dest);
+                    }
+
+                    if (current.getPosition() == WIN_POS) {
+                        System.out.println("\n" + current.getName() + " wins the game! 🎉");
+                        won = true;
+                        break;
+                    }
+                }
+
+                currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
+                try { Thread.sleep(300); } catch (Exception e) {}
+            }
+        }
+    }
+
+    // Board Class
+    static class Board {
+        private final int size;
+        private final Map<Integer, Integer> jumps = new HashMap<>();
+
+        public Board(int size) { this.size = size; }
+
+        public int getSize() { return size; }
+
+        public void addJump(int from, int to) {
+            jumps.put(from, to);
+        }
+
+        public int getDestination(int pos) {
+            return jumps.getOrDefault(pos, -1);
+        }
+    }
+
+    // Player Class
+    static class Player {
+        private final String name;
+        private int position = 0;
+
+        public Player(String name) { this.name = name; }
+
+        public String getName() { return name; }
+
+        public int getPosition() { return position; }
+
+        public void setPosition(int pos) { this.position = pos; }
+    }
+
+    // Dice Class
+    static class Dice {
+        private final Random random = new Random();
+
+        public int roll() {
+            return random.nextInt(6) + 1;
+        }
     }
 }
 ```
-
-## Summary
-- The design follows **OOP principles** with a clear separation of concerns.
-- **Dice** rolls the number.
-- **Board** handles movement logic.
-- **Cells** track positions and jumps.
-- **Players** take turns rolling dice.
-- **Game** orchestrates the logic and declares a winner.
-
-This implementation ensures flexibility and scalability for future enhancements.
 
 ---
 
-Let me know if any modifications are needed! 🚀
+## 5. Notes
+- You may customize snakes/ladders, board size, or add multiple dice.
+- The design follows clean OOP for easy understanding.
+
