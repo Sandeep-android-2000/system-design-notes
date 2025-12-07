@@ -99,59 +99,8 @@ Admin functions:
 
 # 3. UML Diagram (PlantUML)
 
-```plantuml
-@startuml
-interface PriceStrategy {
-  + calculatePrice(durationHours: long): double
-}
+<img width="1488" height="822" alt="ParkingLot" src="https://github.com/user-attachments/assets/492afef0-f21d-4782-ae2f-afc4c6445a76" />
 
-class TwoWheelerPricing implements PriceStrategy
-class ThreeWheelerPricing implements PriceStrategy
-class FourWheelerPricing implements PriceStrategy
-class HUVPricing implements PriceStrategy
-
-abstract class Vehicle {
-  - regNo: String
-  - color: String
-  + getType(): VehicleType
-}
-
-class TwoWheeler extends Vehicle
-class ThreeWheeler extends Vehicle
-class FourWheeler extends Vehicle
-class HUV extends Vehicle
-
-enum VehicleType { TWO_WHEELER, THREE_WHEELER, FOUR_WHEELER, HUV }
-
-class ParkingSpot {
-  - id: String
-  - type: SpotType
-  - occupied: boolean
-}
-
-class Ticket {
-  - ticketId: String
-  - vehicle: Vehicle
-  - spot: ParkingSpot
-  - entryTime: LocalDateTime
-  - exitTime: LocalDateTime
-}
-
-class EntryGate {
-  + parkVehicle(v: Vehicle): Ticket
-}
-
-class ExitGate {
-  + unparkVehicle(ticketId: String): double
-}
-
-class ParkingLot {
-  - floors: List<ParkingFloor>
-  - activeTickets: Map<String, Ticket>
-}
-
-@enduml
-```
 
 ---
 
