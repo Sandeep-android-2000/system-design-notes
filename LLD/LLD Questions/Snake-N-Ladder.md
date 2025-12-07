@@ -27,43 +27,8 @@ This document explains a simple, beginner-friendly design for the classic board 
 
 ## 3. UML Diagram (PlantUML)
 
-```plantuml
-@startuml
-class Game {
-  - board: Board
-  - players: List<Player>
-  - dice: Dice
-  - currentPlayerIndex: int
-  + start(): void
-}
+<img width="559" height="439" alt="SnakeAndLadder" src="https://github.com/user-attachments/assets/651722ce-4a2c-4ac9-aaff-ba36e79fe797" />
 
-class Board {
-  - size: int
-  - cells: Map<int, Cell>
-  + getDestination(pos:int): int
-}
-
-class Cell {
-  - index: int
-  - jumpTo: Integer
-}
-
-class Player {
-  - name: String
-  - position: int
-  + move(steps:int): void
-}
-
-class Dice {
-  + roll(): int
-}
-
-Game "1" -- "1" Board
-Game "1" -- "*" Player
-Game "1" -- "1" Dice
-Board "1" -- "*" Cell
-@enduml
-```
 
 ## 4. Full Java Code (Runnable)
 
