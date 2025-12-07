@@ -22,7 +22,7 @@ This document provides a full, easy-to-understand explanation of a **multi-eleva
 
 ---
 
-# 1.2 *Important Requirements (Your Clarified Core Rules)*
+# 1.2 *Important Requirements*
 
 ### **1. Two Scheduling Strategies**
 The system must support two pluggable strategies:
