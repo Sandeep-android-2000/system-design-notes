@@ -157,61 +157,8 @@ Represents:
 
 <img width="1165" height="554" alt="ElevatorSystem" src="https://github.com/user-attachments/assets/8d7bb891-3448-4132-be53-1e0b986b1413" />
 
-
 ---
-
-# 5. Java Code (Structure Overview)
-
-The actual Java files are structured as:
-
-```
-elevator.system/
- ├── Direction.java
- ├── DoorState.java
- ├── Request.java
- ├── SchedulingStrategy.java
- ├── NearestSuitableStrategy.java
- ├── LeastBusyStrategy.java
- ├── Dispatcher.java
- ├── Elevator.java
- ├── ElevatorController.java
- └── ElevatorApp.java (main)
-```
-
-Each file implements a clean, modular version of the elevator system.
-
----
-
-# 6. Download the Full Java Multi-file Project
-
-A fully prepared Java project ZIP file (multi-file, clean architecture) is available here:
-
-👉 **[Download elevator_system_multi.zip](sandbox:/mnt/data/elevator_system_multi.zip)**
-
----
-
-# 7. Next Improvements (Optional)
-
-You may expand the system by adding:
-
-- Multi-threading (each elevator runs independently)
-- Fire/emergency mode
-- UI simulation (Swing/JavaFX/Web)
-- Group controller logic (real elevator algorithms)
-
----
-
-If you'd like, I can generate:
-
-✅ A **PDF version**  
-✅ A **DOCX version**  
-✅ A **more advanced elevator scheduling system**  
-✅ A step-by-step **LLD interview explanation**  
-
-Just tell me!
-
----
-# 8. Full Java Code (All Files)
+# 5. Full Java Code (All Files)
 
 ## `Direction.java`
 
