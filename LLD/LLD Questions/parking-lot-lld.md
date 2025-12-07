@@ -1,6 +1,4 @@
 # Parking Lot LLD (Beginner-Friendly)  
-### With 2-Wheeler, 3-Wheeler, 4-Wheeler, Heavy Utility Vehicle (HUV)  
-### Includes Simple Price Calculation Strategy
 
 This is a **beginner‑friendly** Low-Level Design of a Parking Lot System with simplified vehicle categories and pricing strategies. It includes:
 
