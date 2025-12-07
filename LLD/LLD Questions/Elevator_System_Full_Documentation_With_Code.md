@@ -1,13 +1,3 @@
-# Elevator System — Complete Documentation WITH Java Code
-
-This file contains:
-- Requirements
-- Entities
-- UML Diagram
-- FULL multi-file Java implementation
-
----
-
 # Elevator System — Complete Beginner-Friendly Documentation
 
 This document provides a full, easy-to-understand explanation of a **multi-elevator system**, including:
