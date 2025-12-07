@@ -155,55 +155,8 @@ Represents:
 
 # 4. UML Diagram (PlantUML)
 
-```
-@startuml
-interface SchedulingStrategy {
-  + assignElevator(elevators: List<Elevator>, request: Request): Elevator
-}
+<img width="1165" height="554" alt="ElevatorSystem" src="https://github.com/user-attachments/assets/8d7bb891-3448-4132-be53-1e0b986b1413" />
 
-class NearestSuitableStrategy implements SchedulingStrategy
-class LeastBusyStrategy implements SchedulingStrategy
-
-class Dispatcher {
-  - strategy: SchedulingStrategy
-  + dispatch(request: Request, elevators: List<Elevator>): Elevator
-}
-
-class Elevator {
-  - id: int
-  - currentFloor: int
-  - direction: Direction
-  - upRequests: TreeSet<int>
-  - downRequests: TreeSet<int>
-  + addExternalRequest(req: Request)
-  + addInternalRequest(floor: int)
-  + step(): void
-  + scoreForRequest(req: Request): int
-}
-
-class ElevatorController {
-  - elevators: List<Elevator>
-  - dispatcher: Dispatcher
-  + externalRequest(floor:int, dir:Direction)
-  + internalRequest(elevatorId:int, floor:int)
-  + stepSimulation(): void
-}
-
-class Request {
-  - floor: int
-  - direction: Direction
-  - internal: boolean
-}
-
-enum Direction { UP, DOWN, IDLE }
-enum DoorState { OPEN, CLOSED }
-
-Dispatcher --> SchedulingStrategy
-Dispatcher --> Elevator
-ElevatorController --> Elevator
-Elevator --> Request
-@enduml
-```
 
 ---
 
