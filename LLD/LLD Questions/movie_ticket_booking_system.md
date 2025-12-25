@@ -1,12 +1,11 @@
 # Movie Ticket Booking System — Low Level Design (LLD)
 
----
 
 ## 1. Introduction
 
-This document presents a **clean, interview-ready Low Level Design (LLD)** for a **Movie Ticket Booking System**, rewritten strictly using the **provided UML diagram and rough flow** as the single source of truth.
+This document presents a **clean, interview-ready Low Level Design (LLD)** for a **Movie Ticket Booking System**
 
-The design follows a **top-down, city-driven approach**, exactly how real-world movie ticket platforms (like BookMyShow) work and how interviewers expect candidates to reason.
+The design follows a **top-down, city-driven approach**, exactly how real-world movie ticket platforms (like BookMyShow) work.
 
 ---
 
@@ -55,7 +54,28 @@ This flow drives **all object identification and relationships**.
 
 ---
 
-## 6. Entity Responsibilities
+## 6. UML Diagram (PlantUML)
+
+<img width="766" height="622" alt="image" src="https://github.com/user-attachments/assets/ea0a8ba8-a85d-4382-8f08-d57e8d26a556" />
+
+---
+
+## 7. Relationships Summary (As per UML)
+
+- MovieController **has-a** Movie
+- TheaterController **has-a** Theater
+- Theater **has-a** Screen
+- Theater **has-a** Show
+- Screen **has-a** Seat
+- Show **has-a** Movie
+- Show **has-a** Screen
+- Booking **has-a** Show
+- Booking **has-a** Seat
+- Booking **has-a** Payment
+
+---
+
+## 8. Entity Responsibilities
 
 ### Movie
 Represents a movie that can be played in multiple cities.
@@ -176,18 +196,7 @@ class Payment {
 
 ---
 
-## 7. Relationships Summary (As per UML)
 
-- MovieController **has-a** Movie
-- TheaterController **has-a** Theater
-- Theater **has-a** Screen
-- Theater **has-a** Show
-- Screen **has-a** Seat
-- Show **has-a** Movie
-- Show **has-a** Screen
-- Booking **has-a** Show
-- Booking **has-a** Seat
-- Booking **has-a** Payment
 
 ---
 
@@ -272,14 +281,11 @@ SET show:seat userId NX EX 900
 
 ---
 
-## 11. UML Diagram (PlantUML)
-
-<img width="766" height="622" alt="image" src="https://github.com/user-attachments/assets/ea0a8ba8-a85d-4382-8f08-d57e8d26a556" />
 
 
 ---
 
-## 12. Common Interview Follow-Up Questions
+## 11. Common Interview Follow-Up Questions
 
 1. Why optimistic locking over pessimistic?
 2. How will you scale this system?
@@ -287,17 +293,4 @@ SET show:seat userId NX EX 900
 4. How do you avoid seat starvation?
 
 ---
-
-## 13. Summary
-
-- Flow-driven design
-- UML-aligned entities
-- Clear responsibilities
-- Optimistic locking for concurrency
-- Redis TTL for seat holding
-- Perfect for LLD interviews
-
----
-
-**End of Document**
 
