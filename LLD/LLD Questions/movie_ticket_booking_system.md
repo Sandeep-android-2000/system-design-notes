@@ -352,7 +352,3 @@ SET seat:showId:seatId userId NX EX 900
 - Redis TTL for seat holding
 - Interview-ready, production-aligned design
 
----
-
-**End of Document**
-
