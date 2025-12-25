@@ -4,136 +4,122 @@
 
 ## 1. Introduction
 
-This document provides a **production-ready Low Level Design (LLD)** for a **Movie Ticket Booking System** (similar to BookMyShow).  
-The design is **city-driven**, **show-centric**, and focuses heavily on **concurrency handling**, which is the most common and critical interview follow-up question.
+This document presents a **clean, interview-ready Low Level Design (LLD)** for a **Movie Ticket Booking System**, rewritten strictly using the **provided UML diagram and rough flow** as the single source of truth.
+
+The design follows a **top-down, city-driven approach**, exactly how real-world movie ticket platforms (like BookMyShow) work and how interviewers expect candidates to reason.
 
 ---
 
-## 2. Functional Requirements
+## 2. Rough Flow (High-Level Understanding)
 
-1. User selects a **City**
-2. System displays **Movies available in that City**
-3. User selects a **Movie**
-4. System displays **Theaters and Shows** for that movie
-5. User selects a **Show**
-6. User selects **Seats**
-7. User completes **Payment**
-8. System generates **Booking Confirmation**
+<img width="1181" height="403" alt="image" src="https://github.com/user-attachments/assets/1431b8c9-adc9-4bfa-8d46-501a40b9c93c" />
+
+
+This flow drives **all object identification and relationships**.
 
 ---
 
-## 3. Non-Functional Requirements
+## 3. Functional Requirements
 
-1. No seat should be double-booked
+1. User must select a **City** before browsing movies
+2. System should display **movies available in the selected city**
+3. For a movie, system should show **theaters running that movie**
+4. For a theater, system should show **available shows**
+5. For a show, system should show **seat availability**
+6. User should be able to **book seats**
+7. Payment must be completed to confirm booking
+
+---
+
+## 4. Non-Functional Requirements
+
+1. **No double booking of seats**
 2. High concurrency handling
-3. Seat should be temporarily held during payment
-4. Automatic seat release on payment failure or timeout
-5. Scalable for high traffic
-6. Fault-tolerant booking flow
+3. Temporary seat lock during payment
+4. Automatic seat release on failure/timeout
+5. Scalable and performant under heavy traffic
 
 ---
 
-## 4. End-to-End User Flow
+## 5. Entities Involved
 
-```
-City → Movie → Theater → Show → Seat → Payment → Confirmation
-```
-
----
-
-## 5. Object Identification
-
-| Object | Responsibility |
-|------|---------------|
-| User | Initiates booking |
-| City | Location context |
-| Movie | Movie metadata |
-| Theater | Physical venue |
-| Screen | Movie hall |
-| Seat | Individual seat |
-| Show | Movie + Screen + Time |
-| Booking | Seat reservation |
-| Payment | Payment status |
+1. User
+2. City
+3. Movie
+4. Theater
+5. Screen (Hall)
+6. Seat
+7. Show
+8. Booking
+9. Payment
 
 ---
 
-## 6. Entity Relationships
+## 6. Entity Responsibilities
 
-- City → Movies (Many-to-Many)
-- City → Theaters (One-to-Many)
-- Theater → Screens (One-to-Many)
-- Screen → Seats (One-to-Many)
-- Theater → Shows (One-to-Many)
-- Show → Booked Seats (One-to-Many)
-- Booking → Payment (One-to-One)
-
----
-
-## 7. Class Design (Java Style)
-
-### 7.1 Movie
+### Movie
+Represents a movie that can be played in multiple cities.
 
 ```java
 class Movie {
-    private String movieId;
-    private String movieName;
-    private int durationInMinutes;
+    String id;
+    String name;
+    int duration;
 }
 ```
 
 ---
 
-### 7.2 MovieController
+### MovieController
+Maintains city-wise movie mapping.
 
 ```java
 class MovieController {
-    private Map<String, List<Movie>> cityVsMovies;
-    private List<Movie> allMovies;
-
-    public List<Movie> getMoviesByCity(String city) {
-        return cityVsMovies.get(city);
-    }
+    Map<String, List<Movie>> cityVsMovies;
+    List<Movie> allMovies;
 }
 ```
 
 ---
 
-### 7.3 Theater
+### Theater
+Represents a physical theater.
 
 ```java
 class Theater {
-    private String theaterId;
-    private String address;
-    private List<Screen> screens;
-    private List<Show> shows;
+    String id;
+    String address;
+    List<Screen> screens;
+    List<Show> shows;
 }
 ```
 
 ---
 
-### 7.4 TheaterController
+### TheaterController
+Maintains city-wise theater mapping.
 
 ```java
 class TheaterController {
-    private Map<String, List<Theater>> cityVsTheaters;
-    private List<Theater> allTheaters;
+    Map<String, List<Theater>> cityVsTheaters;
 }
 ```
 
 ---
 
-### 7.5 Screen
+### Screen (Hall)
+Each theater contains multiple screens.
 
 ```java
 class Screen {
-    private String screenId;
-    private List<Seat> seats;
+    String id;
+    List<Seat> seats;
 }
 ```
 
 ---
 
-### 7.6 Seat & SeatCategory
+### Seat & SeatCategory
 
 ```java
 enum SeatCategory {
@@ -143,151 +129,130 @@ enum SeatCategory {
 }
 
 class Seat {
-    private int seatId;
-    private int row;
-    private SeatCategory category;
-    private double price;
+    int seatId;
+    int rowNo;
+    SeatCategory category;
+    int price;
 }
 ```
 
 ---
 
-### 7.7 Show
+### Show
+Represents a movie running on a screen at a specific time.
 
 ```java
 class Show {
-    private String showId;
-    private Movie movie;
-    private Screen screen;
-    private LocalDateTime startTime;
-    private Set<Integer> bookedSeatIds;
+    String showId;
+    Movie movie;
+    Screen screen;
+    String startTime;
+    List<Integer> bookedSeatIds;
 }
 ```
 
 ---
 
-### 7.8 Booking
+### Booking
+Represents a confirmed seat booking.
 
 ```java
 class Booking {
-    private Show show;
-    private List<Seat> seats;
-    private Payment payment;
+    Show show;
+    List<Seat> bookedSeats;
+    Payment payment;
 }
 ```
 
 ---
 
-### 7.9 Payment
+### Payment
 
 ```java
 class Payment {
-    private String paymentId;
-    private boolean paymentSuccessful;
+    int id;
 }
 ```
 
 ---
 
-### 7.10 Driver Class — BookMyShow
+## 7. Relationships Summary (As per UML)
+
+- MovieController **has-a** Movie
+- TheaterController **has-a** Theater
+- Theater **has-a** Screen
+- Theater **has-a** Show
+- Screen **has-a** Seat
+- Show **has-a** Movie
+- Show **has-a** Screen
+- Booking **has-a** Show
+- Booking **has-a** Seat
+- Booking **has-a** Payment
+
+---
+
+## 8. Driver Class (End-to-End Flow)
+
+The driver simulates the complete booking journey.
 
 ```java
 class BookMyShow {
 
-    private MovieController movieController;
-    private TheaterController theaterController;
+    MovieController movieController = new MovieController();
+    TheaterController theaterController = new TheaterController();
 
     public static void main(String[] args) {
         BookMyShow app = new BookMyShow();
         app.initialize();
-        app.runBookingFlow();
+        app.runFlow();
+    }
+
+    void initialize() {
+        Movie bahubali = new Movie("M1", "Baahubali", 170);
+        movieController.cityVsMovies.put("Bangalore", List.of(bahubali));
+
+        Seat seat30 = new Seat(30, 3, SeatCategory.SILVER, 200);
+        Screen screen = new Screen("S1", List.of(seat30));
+
+        Show show = new Show("SH1", bahubali, screen, "4:00 PM", new ArrayList<>());
+        Theater theater = new Theater("T1", "Bangalore", List.of(screen), List.of(show));
+
+        theaterController.cityVsTheaters.put("Bangalore", List.of(theater));
+    }
+
+    void runFlow() {
+        Show show = theaterController.cityVsTheaters.get("Bangalore").get(0).getShows().get(0);
+
+        int seatId = 30;
+        if (!show.bookedSeatIds.contains(seatId)) {
+            show.bookedSeatIds.add(seatId);
+            Booking booking = new Booking(show, List.of(show.screen.seats.get(0)), new Payment(1));
+            System.out.println("Booking Confirmed");
+        } else {
+            System.out.println("Seat already booked");
+        }
     }
 }
 ```
 
 ---
 
-## 8. Booking Walkthrough Example
+## 9. Concurrency Handling (Interview Critical)
 
-1. User selects **Bangalore**
-2. Movies displayed: Avengers, Baahubali
-3. User selects **Baahubali**
-4. Available shows retrieved
-5. User selects **4:00 PM Show**
-6. User selects **Seat #30**
-7. Seat availability verified
-8. Booking created
-9. Payment successful
-10. Booking confirmed
+### Problem
+Two users attempt to book the **same seat at the same time**.
 
-If another user tries **Seat #30**, system responds:
+### Solution: Optimistic Locking
 
-```
-Seat already booked. Please select another seat.
-```
-
----
-
-## 9. Concurrency Management (Most Important)
-
-### 9.1 Problem Statement
-
-- Two users attempt to book the same seat
-- Seat must not be sold twice
-- Seat should be locked temporarily during payment
-
----
-
-### 9.2 Locking Strategies
-
-#### Pessimistic Locking
-- Locks row on read
-- Blocks other users
-- Poor scalability
-
-#### Optimistic Locking (Chosen)
-- Allows parallel reads
-- Locks only at update time
-- Uses versioning
-
----
-
-### 9.3 Why Optimistic Locking?
-
-- High read, low write system
-- Millions of users viewing seats
-- Locking all seats kills throughput
-- Best suited for ticket booking
-
----
-
-### 9.4 Seat-Level Versioning
+- Multiple users can **read seat data concurrently**
+- At update time, seat **version is checked**
+- Only one update succeeds
 
 ```java
-class SeatAvailability {
-    private int seatId;
-    private int version;
-}
-```
-
----
-
-### 9.5 Optimistic Locking Flow
-
-1. User A reads seat (version = 1)
-2. User B reads seat (version = 1)
-3. User A updates → version becomes 2
-4. User B update fails due to version mismatch
-
----
-
-### 9.6 Synchronized Update Logic
-
-```java
-synchronized (seatLock) {
-    if (currentVersion == dbVersion) {
+synchronized (seat) {
+    if (version == dbVersion) {
         bookSeat();
-        incrementVersion();
+        version++;
     } else {
         throw new SeatAlreadyBookedException();
     }
@@ -296,59 +261,43 @@ synchronized (seatLock) {
 
 ---
 
-### 9.7 Temporary Seat Hold using Redis TTL
+## 10. Temporary Seat Hold (Redis TTL)
 
-- Seat locked for **10–15 minutes**
-- Redis key with expiry
+- Seat locked for **10–15 minutes** during payment
+- Redis key auto-expires
 
-```text
-SET seat:showId:seatId userId NX EX 900
+```
+SET show:seat userId NX EX 900
 ```
 
 ---
 
-### 9.8 Failure Scenarios
+## 11. UML Diagram (PlantUML)
 
-| Scenario | Handling |
-|--------|---------|
-| Payment fails | Redis TTL releases seat |
-| App crash | TTL auto-expires |
-| Concurrent booking | Version mismatch |
-| User abandons | Seat unlocked automatically |
-
----
-
-## 10. UML Diagram (PlantUML)
-
-<img width="585" height="478" alt="image" src="https://github.com/user-attachments/assets/08143627-9a2c-4596-8160-ca65fc9b3ef5" />
+<img width="766" height="622" alt="image" src="https://github.com/user-attachments/assets/ea0a8ba8-a85d-4382-8f08-d57e8d26a556" />
 
 
 ---
 
-## 11. Common Interview Follow-Up Questions
+## 12. Common Interview Follow-Up Questions
 
-1. Why not pessimistic locking?
-2. How will you scale this for high traffic?
-3. What if Redis goes down?
-4. How do you handle payment failures?
-5. How would you support dynamic pricing?
-
----
-
-## 12. Improvements & Extensions
-
-1. Microservices architecture
-2. Distributed locking (Redis Redlock / Zookeeper)
-3. Read replicas and caching
-4. Retry and circuit breaker mechanisms
+1. Why optimistic locking over pessimistic?
+2. How will you scale this system?
+3. What happens if payment fails?
+4. How do you avoid seat starvation?
 
 ---
 
 ## 13. Summary
 
-- City-based discovery
-- Clear object modeling
+- Flow-driven design
+- UML-aligned entities
+- Clear responsibilities
 - Optimistic locking for concurrency
 - Redis TTL for seat holding
-- Interview-ready, production-aligned design
+- Perfect for LLD interviews
+
+---
+
+**End of Document**
 
