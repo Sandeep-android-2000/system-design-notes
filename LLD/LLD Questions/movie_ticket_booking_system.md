@@ -320,28 +320,8 @@ SET seat:showId:seatId userId NX EX 900
 
 ## 10. UML Diagram (PlantUML)
 
-```plantuml
-@startuml
-class Movie
-class City
-class Theater
-class Screen
-class Seat
-class Show
-class Booking
-class Payment
+<img width="585" height="478" alt="image" src="https://github.com/user-attachments/assets/08143627-9a2c-4596-8160-ca65fc9b3ef5" />
 
-City --> Movie
-City --> Theater
-Theater --> Screen
-Screen --> Seat
-Theater --> Show
-Show --> Seat
-Booking --> Show
-Booking --> Seat
-Booking --> Payment
-@enduml
-```
 
 ---
 
