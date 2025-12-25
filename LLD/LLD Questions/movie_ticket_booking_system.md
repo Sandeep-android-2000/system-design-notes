@@ -56,7 +56,8 @@ This flow drives **all object identification and relationships**.
 
 ## 6. UML Diagram (PlantUML)
 
-<img width="766" height="622" alt="image" src="https://github.com/user-attachments/assets/ea0a8ba8-a85d-4382-8f08-d57e8d26a556" />
+<img width="1081" height="768" alt="image" src="https://github.com/user-attachments/assets/ce10b25f-d93a-43ce-a8c9-c95c4cba29bc" />
+
 
 ---
 
