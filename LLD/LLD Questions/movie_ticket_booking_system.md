@@ -280,9 +280,6 @@ SET show:seat userId NX EX 900
 ---
 
 
-
----
-
 ## 11. Common Interview Follow-Up Questions
 
 1. Why optimistic locking over pessimistic?
