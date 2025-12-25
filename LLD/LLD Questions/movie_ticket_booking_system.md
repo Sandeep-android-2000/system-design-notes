@@ -1,7 +1,5 @@
 # Movie Ticket Booking System — Low Level Design (LLD)
 
-**File:** `movie-ticket-booking-system.md`
-
 ---
 
 ## 1. Introduction
