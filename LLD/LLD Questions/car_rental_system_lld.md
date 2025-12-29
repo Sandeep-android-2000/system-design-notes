@@ -138,41 +138,108 @@ Why Store exists:
 
 ---
 
-## 7. VehicleInventoryManager (Most Critical Class)
+## 7. VehicleInventoryManager (Exact as UML – Core Concurrency Component)
 
-Each store has its **own inventory manager** (NOT a singleton).
+This class is **the most critical part of the system** and should be explained very clearly in interviews.
+
+It is **NOT a singleton**. Each `Store` owns its own `VehicleInventoryManager`.
+
+---
+
+### 7.1 Internal Data Structures (from UML)
 
 ```java
 class VehicleInventoryManager {
 
-    Map<Integer, Vehicle> vehicles;
-    Map<Integer, List<Integer>> vehicleVsReservationIds;
-    Map<Integer, Lock> vehicleLocks;
+    // vehicleId -> Vehicle
+    ConcurrentHashMap<Integer, Vehicle> allVehicles;
 
-    ReservationRepository reservationRepo;
+    // vehicleId -> list of reservationIds
+    ConcurrentHashMap<Integer, List<Integer>> vehicleIdVsReservationIds;
+
+    // used to fetch reservation details using reservationId
+    ReservationRepository repo;
+
+    // lock per vehicle (vehicleId -> lock)
+    ConcurrentHashMap<Integer, ReentrantLock> vehicleLocks;
 }
 ```
 
-### Responsibilities
+---
 
-1. Maintain all vehicles in the store
-2. Track reservations per vehicle
-3. Check vehicle availability for a date range
-4. Enforce **vehicle-level locking**
+### 7.2 Why These Maps Exist
 
-### Why Vehicle-Level Locking?
+1. **allVehicles**  
+   Holds all vehicles present in the store. Pure inventory data.
 
-Concurrent collections alone do NOT prevent logical conflicts.
+2. **vehicleIdVsReservationIds**  
+   Maintains booking history for each vehicle.  
+   A vehicle can have multiple reservations for different date ranges.
 
-Without locking:
-- Two threads may see a vehicle as available
-- Both create reservations
-- Result: **double booking**
+3. **ReservationRepository dependency**  
+   Inventory only stores reservation IDs.  
+   Actual reservation details (date range) are fetched from repository.
 
-With locking:
-- Only one thread can reserve a vehicle at a time
+4. **vehicleLocks**  
+   Ensures **vehicle-level atomicity** during booking and release.
 
 ---
+
+### 7.3 Public Methods (as per UML)
+
+```java
++ addVehicle(Vehicle v)
++ Vehicle getVehicle(int vehicleId)
++ boolean isAvailable(int vehicleId, Date from, Date to)
++ boolean bookVehicle(int vehicleId, Date from, Date to)
++ void releaseVehicle(int vehicleId, int reservationId)
++ void putLockOnVehicle(int vehicleId)
+```
+
+---
+
+### 7.4 Availability Check Logic (Very Important)
+
+For a given vehicle:
+- Fetch all reservationIds
+- For each reservationId:
+  - Fetch Reservation from repository
+  - Check date overlap
+
+**Non-overlapping conditions:**
+- New booking ends before existing booking starts
+- New booking starts after existing booking ends
+
+Any other case → overlap → NOT available
+
+---
+
+### 7.5 Booking Flow (Vehicle-Level Locking)
+
+```text
+1. User selects vehicle
+2. InventoryManager.putLockOnVehicle(vehicleId)
+3. Acquire lock
+4. Re-check availability
+5. If available:
+     - add reservationId to map
+     - update vehicle status to BOOKED
+6. Release lock
+```
+
+This double-check ensures **no double booking** even under high concurrency.
+
+---
+
+### 7.6 Why Lock Per Vehicle (Not Global)
+
+- Locking entire inventory would block other users
+- Vehicle-level lock allows parallel booking of different vehicles
+- Scales better under load
+
+---
+
+
 
 ## 8. Reservation
 
@@ -198,7 +265,7 @@ Design Decision:
 
 ```java
 class ReservationRepository {
-    Map<Integer, Reservation> reservations;
+    ConcurrentMap<Integer, Reservation> reservations;
 }
 ```
 
@@ -235,36 +302,179 @@ Key Rule:
 
 ---
 
-## 11. Concurrency Handling (Interview Favorite)
+## 11. Concurrency Handling (ReentrantLock — Beginner Friendly Explanation)
 
-### Problem
-Two users try to reserve the same vehicle for overlapping dates.
+This section explains **step-by-step**, in very simple terms, how **ReentrantLock** is actually used in the `VehicleInventoryManager`.
 
-### Solution
+If you felt earlier that locking looked like pseudocode — you were right. This section now shows **real, concrete Java logic** that exactly matches your UML.
 
-**Vehicle-level locking using ReentrantLock**
+---
+
+## 11.1 Why ConcurrentMap Alone Is NOT Enough
+
+Even if we use `ConcurrentMap`, the following problem still happens:
+
+```text
+Thread T1 checks availability → sees vehicle is free
+Thread T2 checks availability → sees vehicle is free
+T1 books vehicle
+T2 books SAME vehicle
+```
+
+✅ Data structure is thread-safe
+❌ Business logic is NOT thread-safe
+
+So we need **explicit locking**.
+
+---
+
+## 11.2 Locking Design (As Per Your UML)
+
+In `VehicleInventoryManager` we maintain:
 
 ```java
-lock.lock();
-try {
-    if (isAvailable(vehicleId, from, to)) {
-        reserveVehicle();
-    }
-} finally {
-    lock.unlock();
+ConcurrentMap<Integer, ReentrantLock> vehicleLocks;
+```
+
+### Meaning
+- **Key** → vehicleId
+- **Value** → lock object for that specific vehicle
+
+👉 Each vehicle has **its own lock**.
+
+---
+
+## 11.3 Creating / Fetching Lock for a Vehicle
+
+This method comes **directly from your UML**.
+
+```java
+private ReentrantLock lockVehicle(int vehicleId) {
+    vehicleLocks.putIfAbsent(vehicleId, new ReentrantLock());
+    return vehicleLocks.get(vehicleId);
 }
 ```
 
-Important Steps:
-1. Check availability (initial filtering)
-2. Lock vehicle
-3. Re-check availability
-4. Reserve or fail
-5. Release lock
+### Explanation (Line by Line)
 
-This ensures **atomicity + consistency**.
+1. `putIfAbsent` ensures:
+   - If lock already exists → reuse it
+   - If not → create a new one
+
+2. This operation is **thread-safe** because `vehicleLocks` is a `ConcurrentMap`.
+
+3. Same vehicleId will always get the **same lock object**.
 
 ---
+
+## 11.4 Booking a Vehicle (ACTUAL Lock Usage)
+
+Below is the **real implementation**, not pseudocode.
+
+```java
+public boolean bookVehicle(int vehicleId, int reservationId, Date from, Date to) {
+
+    ReentrantLock lock = lockVehicle(vehicleId);
+    lock.lock();   // 🔒 acquire lock
+
+    try {
+        // Step 1: re-check availability AFTER acquiring lock
+        if (!isAvailable(vehicleId, from, to)) {
+            return false;
+        }
+
+        // Step 2: perform booking safely
+        vehicleIdVsReservationIds
+            .computeIfAbsent(vehicleId, k -> new ArrayList<>())
+            .add(reservationId);
+
+        allVehicles.get(vehicleId).status = VehicleStatus.BOOKED;
+        return true;
+
+    } finally {
+        lock.unlock();   // 🔓 release lock (ALWAYS in finally)
+    }
+}
+```
+
+---
+
+## 11.5 Why Lock Is Released in finally
+
+If an exception happens and lock is not released:
+- Vehicle stays locked forever
+- System breaks
+
+Using `finally` guarantees:
+- Lock is always released
+
+---
+
+## 11.6 Releasing a Vehicle (Also Uses Lock)
+
+```java
+public void releaseVehicle(int vehicleId, int reservationId) {
+
+    ReentrantLock lock = lockVehicle(vehicleId);
+    lock.lock();
+
+    try {
+        vehicleIdVsReservationIds
+            .get(vehicleId)
+            .remove(Integer.valueOf(reservationId));
+
+        allVehicles.get(vehicleId).status = VehicleStatus.AVAILABLE;
+
+    } finally {
+        lock.unlock();
+    }
+}
+```
+
+---
+
+## 11.7 Full Thread Scenario (Very Important)
+
+### Without Lock
+
+```text
+T1 → checks availability → free
+T2 → checks availability → free
+T1 → books
+T2 → books ❌
+```
+
+### With Lock
+
+```text
+T1 → acquires lock
+T1 → checks availability → free
+T1 → books
+T1 → releases lock
+
+T2 → acquires lock
+T2 → checks availability → NOT free
+T2 → fails
+```
+
+✅ No double booking
+
+---
+
+## 11.8 Why Lock Per Vehicle (Not Per Inventory)
+
+- Multiple users can book different vehicles simultaneously
+- Only same vehicle is serialized
+- Much better scalability
+
+---
+
+## 11.9 Interview Explanation (One Line)
+
+> "We use a `ConcurrentMap<vehicleId, ReentrantLock>` and acquire the lock before checking availability and booking, ensuring atomicity at vehicle level."
+
+---
+
 
 ## 12. Billing Design
 
@@ -337,12 +547,12 @@ Implementations:
 
 ```java
 class BillManager {
-    Map<Integer, Bill> bills;
+    ConcurrentMap<Integer, Bill> bills;
     BillStrategy strategy;
 }
 
 class PaymentManager {
-    Map<Integer, Payment> payments;
+    ConcurrentMap<Integer, Payment> payments;
     PaymentStrategy payStrategy;
 }
 ```
@@ -509,7 +719,7 @@ class Payment {
 
 ```java
 class ReservationRepository {
-    private Map<Integer, Reservation> reservations = new ConcurrentHashMap<>();
+    private ConcurrentMap<Integer, Reservation> reservations = new ConcurrentHashMap<>();
 
     void save(Reservation r) {
         reservations.put(r.reservationId, r);
@@ -532,9 +742,9 @@ class ReservationRepository {
 ```java
 class VehicleInventoryManager {
 
-    Map<Integer, Vehicle> vehicles = new ConcurrentHashMap<>();
-    Map<Integer, List<Integer>> vehicleVsReservationIds = new ConcurrentHashMap<>();
-    Map<Integer, ReentrantLock> vehicleLocks = new ConcurrentHashMap<>();
+    ConcurrentMap<Integer, Vehicle> vehicles = new ConcurrentHashMap<>();
+    ConcurrentMap<Integer, List<Integer>> vehicleVsReservationIds = new ConcurrentHashMap<>();
+    ConcurrentMap<Integer, ReentrantLock> vehicleLocks = new ConcurrentHashMap<>();
 
     ReservationRepository reservationRepo;
 
@@ -661,7 +871,7 @@ class DailyBillStrategy implements BillStrategy {
 }
 
 class BillManager {
-    Map<Integer, Bill> bills = new ConcurrentHashMap<>();
+    ConcurrentMap<Integer, Bill> bills = new ConcurrentHashMap<>();
     AtomicInteger billCounter = new AtomicInteger(1);
     BillStrategy strategy;
 
@@ -690,7 +900,7 @@ class UPIPaymentStrategy implements PaymentStrategy {
 }
 
 class PaymentManager {
-    Map<Integer, Payment> payments = new ConcurrentHashMap<>();
+    ConcurrentMap<Integer, Payment> payments = new ConcurrentHashMap<>();
     AtomicInteger paymentCounter = new AtomicInteger(1);
     PaymentStrategy strategy;
 
