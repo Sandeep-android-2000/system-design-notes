@@ -2,26 +2,7 @@
 
 ---
 
-## 1. Introduction
-
-These notes provide a **very detailed, interview-ready Low Level Design (LLD)** for a **Car Rental System**, created strictly using:
-- The complete transcript you provided
-- The detailed UML diagrams (Excalidraw screenshots)
-
-The intent of this document is not just to show *what* classes exist, but to clearly explain:
-- **Why each class exists**
-- **What responsibility it owns**
-- **How objects collaborate**
-- **How concurrency is safely handled**
-
-This style of documentation is ideal for:
-- LLD interview preparation
-- Revision notes before interviews
-- Explaining design decisions confidently as a senior engineer
-
----
-
-## 2. Problem Statement
+## 1. Problem Statement
 
 Design a **Car Rental System** where:
 - Users can rent vehicles from nearby stores
@@ -36,7 +17,7 @@ The system should be extensible to support:
 
 ---
 
-## 3. User Flow (Step-by-Step)
+## 2. User Flow (Step-by-Step)
 
 ```
 User
@@ -55,7 +36,7 @@ This flow is **central** to the entire design and drives entity identification.
 
 ---
 
-## 4. How Entities Were Identified
+## 3. How Entities Were Identified
 
 While analyzing the flow, we list down **nouns** and **responsibility holders**:
 
@@ -80,9 +61,9 @@ And finally **supporting components**:
 
 ---
 
-## 5. Core Domain Entities (POJO Classes)
+## 4. Core Domain Entities (POJO Classes)
 
-### 5.1 User
+### 4.1 User
 
 ```java
 class User {
@@ -96,7 +77,7 @@ User is a **simple data holder**. No business logic is placed here.
 
 ---
 
-### 5.2 Vehicle
+### 4.2 Vehicle
 
 ```java
 class Vehicle {
@@ -117,7 +98,7 @@ All such logic is delegated to the inventory manager.
 
 ---
 
-## 6. Store — Central Orchestrator
+## 5. Store — Central Orchestrator
 
 ```java
 class Store {
@@ -138,7 +119,7 @@ Why Store exists:
 
 ---
 
-## 7. VehicleInventoryManager (Exact as UML – Core Concurrency Component)
+## 6. VehicleInventoryManager (Exact as UML – Core Concurrency Component)
 
 This class is **the most critical part of the system** and should be explained very clearly in interviews.
 
@@ -146,7 +127,7 @@ It is **NOT a singleton**. Each `Store` owns its own `VehicleInventoryManager`.
 
 ---
 
-### 7.1 Internal Data Structures (from UML)
+### 6.1 Internal Data Structures (from UML)
 
 ```java
 class VehicleInventoryManager {
@@ -167,7 +148,7 @@ class VehicleInventoryManager {
 
 ---
 
-### 7.2 Why These Maps Exist
+### 6.2 Why These Maps Exist
 
 1. **allVehicles**  
    Holds all vehicles present in the store. Pure inventory data.
@@ -185,7 +166,7 @@ class VehicleInventoryManager {
 
 ---
 
-### 7.3 Public Methods (as per UML)
+### 6.3 Public Methods (as per UML)
 
 ```java
 + addVehicle(Vehicle v)
@@ -198,7 +179,7 @@ class VehicleInventoryManager {
 
 ---
 
-### 7.4 Availability Check Logic (Very Important)
+### 6.4 Availability Check Logic (Very Important)
 
 For a given vehicle:
 - Fetch all reservationIds
@@ -214,7 +195,7 @@ Any other case → overlap → NOT available
 
 ---
 
-### 7.5 Booking Flow (Vehicle-Level Locking)
+### 6.5 Booking Flow (Vehicle-Level Locking)
 
 ```text
 1. User selects vehicle
@@ -231,7 +212,7 @@ This double-check ensures **no double booking** even under high concurrency.
 
 ---
 
-### 7.6 Why Lock Per Vehicle (Not Global)
+### 6.6 Why Lock Per Vehicle (Not Global)
 
 - Locking entire inventory would block other users
 - Vehicle-level lock allows parallel booking of different vehicles
@@ -241,7 +222,7 @@ This double-check ensures **no double booking** even under high concurrency.
 
 
 
-## 8. Reservation
+## 7. Reservation
 
 ```java
 class Reservation {
@@ -261,7 +242,7 @@ Design Decision:
 
 ---
 
-## 9. ReservationRepository (Breaking Circular Dependency)
+## 8. ReservationRepository (Breaking Circular Dependency)
 
 ```java
 class ReservationRepository {
@@ -281,7 +262,7 @@ Solution:
 
 ---
 
-## 10. ReservationManager
+## 9. ReservationManager
 
 ```java
 class ReservationManager {
@@ -302,7 +283,7 @@ Key Rule:
 
 ---
 
-## 11. Concurrency Handling (ReentrantLock — Beginner Friendly Explanation)
+## 10. Concurrency Handling (ReentrantLock — Beginner Friendly Explanation)
 
 This section explains **step-by-step**, in very simple terms, how **ReentrantLock** is actually used in the `VehicleInventoryManager`.
 
@@ -310,7 +291,7 @@ If you felt earlier that locking looked like pseudocode — you were right. This
 
 ---
 
-## 11.1 Why ConcurrentMap Alone Is NOT Enough
+## 10.1 Why ConcurrentMap Alone Is NOT Enough
 
 Even if we use `ConcurrentMap`, the following problem still happens:
 
@@ -328,7 +309,7 @@ So we need **explicit locking**.
 
 ---
 
-## 11.2 Locking Design (As Per Your UML)
+## 10.2 Locking Design (As Per Your UML)
 
 In `VehicleInventoryManager` we maintain:
 
@@ -344,7 +325,7 @@ ConcurrentMap<Integer, ReentrantLock> vehicleLocks;
 
 ---
 
-## 11.3 Creating / Fetching Lock for a Vehicle
+## 10.3 Creating / Fetching Lock for a Vehicle
 
 This method comes **directly from your UML**.
 
@@ -399,7 +380,7 @@ public boolean bookVehicle(int vehicleId, int reservationId, Date from, Date to)
 
 ---
 
-## 11.5 Why Lock Is Released in finally
+## 10.5 Why Lock Is Released in finally
 
 If an exception happens and lock is not released:
 - Vehicle stays locked forever
@@ -410,7 +391,7 @@ Using `finally` guarantees:
 
 ---
 
-## 11.6 Releasing a Vehicle (Also Uses Lock)
+## 10.6 Releasing a Vehicle (Also Uses Lock)
 
 ```java
 public void releaseVehicle(int vehicleId, int reservationId) {
@@ -433,7 +414,7 @@ public void releaseVehicle(int vehicleId, int reservationId) {
 
 ---
 
-## 11.7 Full Thread Scenario (Very Important)
+## 10.7 Full Thread Scenario (Very Important)
 
 ### Without Lock
 
@@ -461,7 +442,7 @@ T2 → fails
 
 ---
 
-## 11.8 Why Lock Per Vehicle (Not Per Inventory)
+## 10.8 Why Lock Per Vehicle (Not Per Inventory)
 
 - Multiple users can book different vehicles simultaneously
 - Only same vehicle is serialized
@@ -469,16 +450,16 @@ T2 → fails
 
 ---
 
-## 11.9 Interview Explanation (One Line)
+## 10.9 Interview Explanation (One Line)
 
 > "We use a `ConcurrentMap<vehicleId, ReentrantLock>` and acquire the lock before checking availability and booking, ensuring atomicity at vehicle level."
 
 ---
 
 
-## 12. Billing Design
+## 11. Billing Design
 
-### 12.1 Bill
+### 11.1 Bill
 
 ```java
 class Bill {
@@ -493,7 +474,7 @@ Bill stores **minimal required data**.
 
 ---
 
-### 12.2 Billing Strategy (Strategy Pattern)
+### 11.2 Billing Strategy (Strategy Pattern)
 
 ```java
 interface BillStrategy {
@@ -514,9 +495,9 @@ Why Strategy Pattern:
 
 ---
 
-## 13. Payment Design
+## 12. Payment Design
 
-### 13.1 Payment
+### 12.1 Payment
 
 ```java
 class Payment {
@@ -529,7 +510,7 @@ class Payment {
 
 ---
 
-### 13.2 Payment Strategy
+### 12.2 Payment Strategy
 
 ```java
 interface PaymentStrategy {
@@ -543,7 +524,7 @@ Implementations:
 
 ---
 
-## 14. Managers for Billing & Payment
+## 13. Managers for Billing & Payment
 
 ```java
 class BillManager {
@@ -559,7 +540,7 @@ class PaymentManager {
 
 ---
 
-## 15. VehicleRentalSystem (Root Object)
+## 14. VehicleRentalSystem (Root Object)
 
 ```java
 class VehicleRentalSystem {
@@ -575,15 +556,15 @@ Responsibilities:
 
 ---
 
-## 16. UML Diagram
+## 15. UML Diagram
 
-[![Car Rental UML](https://github.com/user-attachments/assets/5bb688c8-a36e-40fd-8a7c-46f8605364b3)]
+![Car Rental UML](https://github.com/user-attachments/assets/5bb688c8-a36e-40fd-8a7c-46f8605364b3)
 (https://github.com/user-attachments/assets/5bb688c8-a36e-40fd-8a7c-46f8605364b3)
 
 
 ---
 
-## 17. Final Summary (How to Explain in Interview)
+## 16. Final Summary (How to Explain in Interview)
 
 - Start from user flow
 - Identify core entities
@@ -598,13 +579,13 @@ This design is **clean, extensible, concurrency-safe, and interview-ready**.
 
 ---
 
-## 18. Complete Java Code (LLD Reference Implementation)
+## 17. Complete Java Code (LLD Reference Implementation)
 
 > **Note**: This is an in-memory, interview-focused implementation. Thread-safety and structure match the UML.
 
 ---
 
-### 18.1 Enums
+### 17.1 Enums
 
 ```java
 enum VehicleType {
@@ -639,7 +620,7 @@ enum PaymentMode {
 
 ---
 
-### 18.2 Core POJOs
+### 17.2 Core POJOs
 
 ```java
 class User {
@@ -683,7 +664,7 @@ class Payment {
 
 ---
 
-### 18.3 Reservation Repository
+### 17.3 Reservation Repository
 
 ```java
 class ReservationRepository {
@@ -705,7 +686,7 @@ class ReservationRepository {
 
 ---
 
-### 18.4 VehicleInventoryManager (Concurrency Core)
+### 17.4 VehicleInventoryManager (Concurrency Core)
 
 ```java
 class VehicleInventoryManager {
@@ -767,7 +748,7 @@ class VehicleInventoryManager {
 
 ---
 
-### 18.5 ReservationManager
+### 17.5 ReservationManager
 
 ```java
 class ReservationManager {
@@ -813,7 +794,7 @@ class ReservationManager {
 
 ---
 
-### 18.6 Billing Strategy & Manager
+### 17.6 Billing Strategy & Manager
 
 ```java
 interface BillStrategy {
@@ -854,7 +835,7 @@ class BillManager {
 
 ---
 
-### 18.7 Payment Strategy & Manager
+### 17.7 Payment Strategy & Manager
 
 ```java
 interface PaymentStrategy {
@@ -886,7 +867,7 @@ class PaymentManager {
 
 ---
 
-### 18.8 Store & Driver Class
+### 17.8 Store & Driver Class
 
 ```java
 class Store {
@@ -935,8 +916,4 @@ public class Driver {
     }
 }
 ```
-
----
-
-**End of Detailed Notes**
 
