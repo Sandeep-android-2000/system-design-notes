@@ -575,43 +575,11 @@ Responsibilities:
 
 ---
 
-## 16. UML Diagram (PlantUML)
+## 16. UML Diagram
 
-```plantuml
-@startuml
-class VehicleRentalSystem
-class Store
-class VehicleInventoryManager
-class ReservationManager
-class ReservationRepository
-class Vehicle
-class Reservation
-class BillManager
-class BillStrategy
-class DailyBillStrategy
-class HourlyBillStrategy
-class PaymentManager
-class PaymentStrategy
-class Payment
-class User
+[![Car Rental UML](https://github.com/user-attachments/assets/5bb688c8-a36e-40fd-8a7c-46f8605364b3)]
+(https://github.com/user-attachments/assets/5bb688c8-a36e-40fd-8a7c-46f8605364b3)
 
-VehicleRentalSystem --> Store
-VehicleRentalSystem --> User
-Store --> VehicleInventoryManager
-Store --> ReservationManager
-Store --> BillManager
-Store --> PaymentManager
-ReservationManager --> ReservationRepository
-ReservationManager --> VehicleInventoryManager
-VehicleInventoryManager --> Vehicle
-VehicleInventoryManager --> ReservationRepository
-BillManager --> BillStrategy
-BillStrategy <|-- DailyBillStrategy
-BillStrategy <|-- HourlyBillStrategy
-PaymentManager --> PaymentStrategy
-PaymentManager --> Payment
-@enduml
-```
 
 ---
 
