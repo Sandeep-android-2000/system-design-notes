@@ -5,226 +5,262 @@
 
 ## 1. Problem Statement
 
-Design a **Low Level Design (LLD)** for an **Order and Inventory Management System** similar to Zepto / Blinkit.
-
-The system should allow:
-- Users to browse products
-- Add products to a cart
-- Place an order
-- Generate invoice
-- Complete payment
-- Update inventory
-- Track order status
-
-This design focuses **only on core business logic**.
+Design a Low Level Design (LLD) for an Order & Inventory Management System similar to Zepto.
+The system should support product browsing, cart, order placement, invoice generation,
+payment, and inventory updates.
 
 ---
 
 ## 2. Requirement Clarification
 
 ### Functional Requirements
-- Multiple warehouses exist in different locations
-- Each warehouse has its own inventory
-- A single order must be fulfilled by **one warehouse only**
-- Users add items by **category & quantity**
-- Inventory must be updated after checkout
-- Payment failure should rollback inventory
-- Support multiple payment modes
+- Multiple warehouses
+- Each order fulfilled by a single warehouse
+- Category-based product selection
+- Inventory update on checkout
+- Payment handling
+- Order lifecycle management
 
 ### Non-Functional Requirements
-- Extensible design
-- Clean separation of concerns
-- Interview-friendly and readable
-
-### Out of Scope
-- Authentication & authorization
-- Notifications
-- Delivery partner assignment
-- Scalability & microservices
+- Simple and readable design
+- Extensible
+- Interview-friendly
 
 ---
 
 ## 3. User / Happy Flow
 
-1. User opens the app
-2. System selects a warehouse
-3. Inventory from selected warehouse is shown
+1. User opens app
+2. Warehouse selected
+3. Inventory shown
 4. User adds items to cart
 5. User places order
-6. Invoice is generated
-7. User completes payment
-8. Inventory is updated
-9. Order status is updated
+6. Invoice generated
+7. Payment done
+8. Inventory updated
+9. Order status updated
 
 ---
 
-## 4. Entities
-
-### 4.1 Product
-
-```java
-class Product {
-    int id;
-    String name;
-}
-```
+## 4. Entities (Complete Java Code)
 
 ---
 
-### 4.2 ProductCategory
-
-```java
-class ProductCategory {
-    int categoryId;
-    String categoryName;
-    List<Product> products;
-    double price;
-}
-```
-
-Why category-based?
-- Same product shown once
-- User selects quantity
-- Same price for all items
-
----
-
-### 4.3 Inventory
-
-```java
-class ProductInventory {
-    List<ProductCategory> categories;
-}
-```
-
----
-
-### 4.4 Warehouse
-
-```java
-class Warehouse {
-    ProductInventory inventory;
-    Address address;
-}
-```
-
----
-
-### 4.5 Address
+### Address
 
 ```java
 class Address {
     int pincode;
     String city;
     String state;
+
+    Address(int pincode, String city, String state) {
+        this.pincode = pincode;
+        this.city = city;
+        this.state = state;
+    }
 }
 ```
 
 ---
 
-### 4.6 User
+### Product
 
 ```java
-class User {
-    int userId;
+class Product {
+    int id;
     String name;
-    Cart cart;
-    List<Integer> orderIds;
+
+    Product(int id, String name) {
+        this.id = id;
+        this.name = name;
+    }
 }
 ```
 
 ---
 
-### 4.7 Cart
+### ProductCategory
+
+```java
+import java.util.*;
+
+class ProductCategory {
+    int categoryId;
+    String name;
+    double price;
+    List<Product> products = new ArrayList<>();
+
+    ProductCategory(int categoryId, String name, double price) {
+        this.categoryId = categoryId;
+        this.name = name;
+        this.price = price;
+    }
+
+    void addProduct(Product product) {
+        products.add(product);
+    }
+
+    void removeProducts(int count) {
+        for (int i = 0; i < count && !products.isEmpty(); i++) {
+            products.remove(products.size() - 1);
+        }
+    }
+
+    int availableCount() {
+        return products.size();
+    }
+}
+```
+
+---
+
+### Inventory
+
+```java
+class Inventory {
+    Map<Integer, ProductCategory> categories = new HashMap<>();
+
+    void addCategory(ProductCategory category) {
+        categories.put(category.categoryId, category);
+    }
+
+    ProductCategory getCategory(int categoryId) {
+        return categories.get(categoryId);
+    }
+}
+```
+
+---
+
+### Warehouse
+
+```java
+class Warehouse {
+    Inventory inventory;
+    Address address;
+
+    Warehouse(Inventory inventory, Address address) {
+        this.inventory = inventory;
+        this.address = address;
+    }
+}
+```
+
+---
+
+## 5. Cart & User
+
+---
+
+### Cart
 
 ```java
 class Cart {
-    Map<Integer, Integer> categoryVsCount;
+    Map<Integer, Integer> items = new HashMap<>();
+
+    void addItem(int categoryId, int count) {
+        items.put(categoryId, items.getOrDefault(categoryId, 0) + count);
+    }
+
+    Map<Integer, Integer> getItems() {
+        return items;
+    }
+
+    void clear() {
+        items.clear();
+    }
 }
 ```
 
 ---
 
-### 4.8 Order
+### User
 
 ```java
-class Order {
-    int orderId;
-    User user;
-    Address deliveryAddress;
-    Warehouse warehouse;
-    Map<Integer, Integer> categoryVsCount;
-    Invoice invoice;
-    Payment payment;
-    OrderStatus status;
+class User {
+    int id;
+    String name;
+    Address address;
+    Cart cart = new Cart();
+
+    User(int id, String name, Address address) {
+        this.id = id;
+        this.name = name;
+        this.address = address;
+    }
 }
 ```
 
 ---
 
-### 4.9 Invoice
+## 6. Order, Invoice, Payment
+
+---
+
+### OrderStatus
+
+```java
+enum OrderStatus {
+    CREATED, PAID, CANCELLED
+}
+```
+
+---
+
+### Invoice
 
 ```java
 class Invoice {
     double itemTotal;
     double tax;
     double finalAmount;
+
+    Invoice(double itemTotal) {
+        this.itemTotal = itemTotal;
+        this.tax = itemTotal * 0.05;
+        this.finalAmount = itemTotal + tax;
+    }
 }
 ```
 
 ---
 
-### 4.10 Payment
-
-```java
-class Payment {
-    PaymentStrategy strategy;
-}
-```
-
----
-
-### 4.11 OrderStatus
-
-```java
-enum OrderStatus {
-    PENDING,
-    DELIVERED,
-    UNDELIVERED
-}
-```
-
----
-
-## 5. Relationships Between Entities
-
-- User **has one** Cart
-- User **has many** Orders (via order IDs)
-- Warehouse **has one** Inventory
-- Inventory **has many** ProductCategories
-- ProductCategory **has many** Products
-- Order **belongs to one** User
-- Order **uses one** Warehouse
-- Order **has one** Invoice
-- Order **has one** Payment
-
----
-
-## 6. Design Patterns Used
-
-### Strategy Pattern
-- Warehouse selection
-- Payment modes
-
-```java
-interface WarehouseSelectionStrategy {
-    Warehouse selectWarehouse(List<Warehouse> warehouses);
-}
-```
+### Payment
 
 ```java
 interface PaymentStrategy {
-    boolean makePayment(double amount);
+    boolean pay(double amount);
+}
+
+class UpiPayment implements PaymentStrategy {
+    public boolean pay(double amount) {
+        return true; // success
+    }
+}
+```
+
+---
+
+### Order
+
+```java
+class Order {
+    static int counter = 1;
+    int orderId;
+    User user;
+    Warehouse warehouse;
+    Map<Integer, Integer> items;
+    Invoice invoice;
+    OrderStatus status;
+
+    Order(User user, Warehouse warehouse, Map<Integer, Integer> items) {
+        this.orderId = counter++;
+        this.user = user;
+        this.warehouse = warehouse;
+        this.items = new HashMap<>(items);
+        this.status = OrderStatus.CREATED;
+    }
 }
 ```
 
@@ -232,123 +268,99 @@ interface PaymentStrategy {
 
 ## 7. Controllers
 
-### UserController
-- Manage users
-
-### WarehouseController
-- Manage warehouses
-- Select warehouse using strategy
+---
 
 ### OrderController
-- Place orders
-- Checkout
-- Handle inventory updates
-
----
-
-## 8. Java Code (Core Flow)
-
-### Place Order (Simplified)
 
 ```java
-Order placeOrder(User user, Warehouse warehouse, Address address) {
-    Order order = new Order(user, warehouse, address);
-    order.generateInvoice();
-    return order;
-}
-```
+class OrderController {
 
----
+    Order placeOrder(User user, Warehouse warehouse) {
+        Order order = new Order(user, warehouse, user.cart.getItems());
 
-## 9. Driver Code (`App.java`)
+        double total = 0;
+        for (Map.Entry<Integer, Integer> entry : order.items.entrySet()) {
+            ProductCategory category =
+                warehouse.inventory.getCategory(entry.getKey());
+            total += category.price * entry.getValue();
+        }
 
-```java
-public class App {
+        order.invoice = new Invoice(total);
+        return order;
+    }
 
-    public static void main(String[] args) {
+    void checkout(Order order, PaymentStrategy payment) {
 
-        UserController userController = new UserController();
-        WarehouseController warehouseController = new WarehouseController();
-        OrderController orderController = new OrderController();
+        // reduce inventory
+        for (Map.Entry<Integer, Integer> entry : order.items.entrySet()) {
+            ProductCategory category =
+                order.warehouse.inventory.getCategory(entry.getKey());
+            category.removeProducts(entry.getValue());
+        }
 
-        Address warehouseAddress = new Address(560001, "Bangalore", "Karnataka");
-        ProductInventory inventory = new ProductInventory();
+        boolean success = payment.pay(order.invoice.finalAmount);
 
-        ProductCategory drinks =
-                new ProductCategory(1, "Cold Drink", 100);
-        drinks.addProduct(new Product(1, "Bottle"));
-        drinks.addProduct(new Product(2, "Bottle"));
-
-        inventory.addProductCategory(drinks);
-
-        Warehouse warehouse = new Warehouse(inventory, warehouseAddress);
-        warehouseController.addWarehouse(warehouse);
-        warehouseController.setStrategy(new NearestWarehouseStrategy());
-
-        User user = new User(1, "Sandeep",
-                new Address(560003, "Bangalore", "Karnataka"));
-        userController.addUser(user);
-
-        Warehouse selectedWarehouse =
-                warehouseController.selectWarehouse();
-
-        user.getCart().addItem(1, 2);
-
-        Order order = orderController.placeOrder(
-                user,
-                selectedWarehouse,
-                user.getAddress()
-        );
-
-        Payment payment =
-                new Payment(new UpiPaymentStrategy());
-
-        orderController.checkout(order, payment);
-
-        System.out.println("Order Status: " + order.getStatus());
+        if (success) {
+            order.status = OrderStatus.PAID;
+            order.user.cart.clear();
+        } else {
+            order.status = OrderStatus.CANCELLED;
+        }
     }
 }
 ```
 
 ---
 
+## 8. Driver Code (App)
+
+```java
+public class App {
+
+    public static void main(String[] args) {
+
+        Inventory inventory = new Inventory();
+
+        ProductCategory drinks =
+            new ProductCategory(1, "Cold Drink", 100);
+        drinks.addProduct(new Product(1, "Bottle"));
+        drinks.addProduct(new Product(2, "Bottle"));
+
+        inventory.addCategory(drinks);
+
+        Warehouse warehouse =
+            new Warehouse(inventory,
+                new Address(560001, "Bangalore", "KA"));
+
+        User user =
+            new User(1, "Sandeep",
+                new Address(560003, "Bangalore", "KA"));
+
+        user.cart.addItem(1, 2);
+
+        OrderController oc = new OrderController();
+        Order order = oc.placeOrder(user, warehouse);
+
+        oc.checkout(order, new UpiPayment());
+
+        System.out.println("Order Status: " + order.status);
+        System.out.println("Remaining Stock: "
+            + drinks.availableCount());
+    }
+}
+```
+
+---
+
+## 9. UML Diagram
+
+![UML Diagram](Order_Inventory Managment System.excalidraw.png)
+
+---
+
 ## 10. Summary
 
-- Clean LLD for Order & Inventory systems
-- Category-based cart simplifies logic
-- Strategy pattern ensures extensibility
-- App acts as driver / composition root
-- Interview-ready and scalable design
-
-
----
-
-## 11. UML Diagram
-
-The following UML diagram represents the **complete structure and relationships**
-between entities in the Order & Inventory Management System.
-
-It highlights:
-- Core domain entities (User, Order, Warehouse, Inventory, Product)
-- Controller layer
-- Strategy pattern usage (Warehouse selection, Payment)
-- Ownership and associations (has-a relationships)
-
-### UML Diagram Overview
-
-- **User** has one **Cart** and multiple **Orders**
-- **WarehouseController** manages multiple **Warehouses**
-- **Warehouse** owns **Inventory**
-- **Inventory** contains **ProductCategories**
-- **ProductCategory** groups multiple **Products**
-- **Order** aggregates User, Warehouse, Invoice, Payment
-- **Strategy Pattern** used for:
-  - Warehouse selection
-  - Payment processing
-
-### UML Diagram Image
-
-<img width="6371" height="4723" alt="Order_Inventory Managment System excalidraw" src="https://github.com/user-attachments/assets/869a25c3-11d0-4856-a92f-cdfd98121368" />
-
-
----
+- Fully working simple Java design
+- Easy to explain in interviews
+- Clear inventory & order flow
+- Strategy pattern used for payment
