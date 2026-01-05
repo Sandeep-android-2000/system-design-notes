@@ -348,6 +348,7 @@ It highlights:
 
 ### UML Diagram Image
 
-![Order & Inventory Management UML](Order_Inventory Managment System.excalidraw.png)
+<img width="6371" height="4723" alt="Order_Inventory Managment System excalidraw" src="https://github.com/user-attachments/assets/869a25c3-11d0-4856-a92f-cdfd98121368" />
+
 
 ---
