@@ -442,7 +442,8 @@ public class App {
 
 ## 11. UML Diagram
 
-![UML Diagram](Order_Inventory Managment System.excalidraw.png)
+<img width="6371" height="4723" alt="Order_Inventory Managment System excalidraw" src="https://github.com/user-attachments/assets/e34e3f01-61bd-48d6-98ed-b342ad81fbdd" />
+
 
 ---
 
