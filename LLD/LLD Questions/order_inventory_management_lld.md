@@ -7,42 +7,43 @@
 
 Design a Low Level Design (LLD) for an Order & Inventory Management System similar to Zepto.
 The system should support product browsing, cart, order placement, invoice generation,
-payment, and inventory updates.
+payment, warehouse-based inventory management, and order lifecycle handling.
 
 ---
 
 ## 2. Requirement Clarification
 
 ### Functional Requirements
-- Multiple warehouses
-- Each order fulfilled by a single warehouse
-- Category-based product selection
-- Inventory update on checkout
-- Payment handling
-- Order lifecycle management
+- Multiple warehouses in different locations
+- Each order must be fulfilled by exactly **one warehouse**
+- Warehouse is selected dynamically using a strategy
+- Category-based product selection (quantity driven)
+- Inventory updates on checkout
+- Payment handled via multiple payment modes
+- Order status management
 
 ### Non-Functional Requirements
-- Simple and readable design
-- Extensible
-- Interview-friendly
+- Simple, readable Java code
+- Easy to explain in interviews
+- Extensible design (Open for extension)
 
 ---
 
 ## 3. User / Happy Flow
 
-1. User opens app
-2. Warehouse selected
-3. Inventory shown
+1. User opens the app
+2. System selects a warehouse using a strategy
+3. Inventory of selected warehouse is shown
 4. User adds items to cart
 5. User places order
-6. Invoice generated
-7. Payment done
-8. Inventory updated
+6. Invoice is generated
+7. Payment is made
+8. Inventory is updated
 9. Order status updated
 
 ---
 
-## 4. Entities (Complete Java Code)
+## 4. Core Entities (Complete Java Code)
 
 ---
 
@@ -149,7 +150,62 @@ class Warehouse {
 
 ---
 
-## 5. Cart & User
+## 5. Warehouse Selection Strategy (Strategy Pattern)
+
+---
+
+### WarehouseSelectionStrategy
+
+```java
+import java.util.List;
+
+interface WarehouseSelectionStrategy {
+    Warehouse selectWarehouse(List<Warehouse> warehouses, Address userAddress);
+}
+```
+
+---
+
+### NearestWarehouseStrategy (Simple Implementation)
+
+```java
+class NearestWarehouseStrategy implements WarehouseSelectionStrategy {
+
+    @Override
+    public Warehouse selectWarehouse(List<Warehouse> warehouses, Address userAddress) {
+        // Simplified logic: return first warehouse
+        return warehouses.get(0);
+    }
+}
+```
+
+---
+
+### WarehouseController
+
+```java
+class WarehouseController {
+
+    List<Warehouse> warehouses = new ArrayList<>();
+    WarehouseSelectionStrategy strategy;
+
+    void addWarehouse(Warehouse warehouse) {
+        warehouses.add(warehouse);
+    }
+
+    void setStrategy(WarehouseSelectionStrategy strategy) {
+        this.strategy = strategy;
+    }
+
+    Warehouse selectWarehouse(Address userAddress) {
+        return strategy.selectWarehouse(warehouses, userAddress);
+    }
+}
+```
+
+---
+
+## 6. Cart & User
 
 ---
 
@@ -194,7 +250,7 @@ class User {
 
 ---
 
-## 6. Order, Invoice, Payment
+## 7. Order, Invoice & Payment
 
 ---
 
@@ -226,16 +282,44 @@ class Invoice {
 
 ---
 
-### Payment
+## 8. Payment Strategy (Strategy Pattern)
+
+---
+
+### PaymentStrategy
 
 ```java
 interface PaymentStrategy {
     boolean pay(double amount);
 }
+```
 
-class UpiPayment implements PaymentStrategy {
+---
+
+### UpiPaymentStrategy
+
+```java
+class UpiPaymentStrategy implements PaymentStrategy {
+
+    @Override
     public boolean pay(double amount) {
-        return true; // success
+        // Simulate successful payment
+        return true;
+    }
+}
+```
+
+---
+
+### CardPaymentStrategy
+
+```java
+class CardPaymentStrategy implements PaymentStrategy {
+
+    @Override
+    public boolean pay(double amount) {
+        // Simulate successful payment
+        return true;
     }
 }
 ```
@@ -266,16 +350,13 @@ class Order {
 
 ---
 
-## 7. Controllers
-
----
-
-### OrderController
+## 9. OrderController
 
 ```java
 class OrderController {
 
     Order placeOrder(User user, Warehouse warehouse) {
+
         Order order = new Order(user, warehouse, user.cart.getItems());
 
         double total = 0;
@@ -291,7 +372,7 @@ class OrderController {
 
     void checkout(Order order, PaymentStrategy payment) {
 
-        // reduce inventory
+        // Reduce inventory
         for (Map.Entry<Integer, Integer> entry : order.items.entrySet()) {
             ProductCategory category =
                 order.warehouse.inventory.getCategory(entry.getKey());
@@ -312,7 +393,7 @@ class OrderController {
 
 ---
 
-## 8. Driver Code (App)
+## 10. Driver Code (App)
 
 ```java
 public class App {
@@ -332,16 +413,23 @@ public class App {
             new Warehouse(inventory,
                 new Address(560001, "Bangalore", "KA"));
 
+        WarehouseController warehouseController = new WarehouseController();
+        warehouseController.addWarehouse(warehouse);
+        warehouseController.setStrategy(new NearestWarehouseStrategy());
+
         User user =
             new User(1, "Sandeep",
                 new Address(560003, "Bangalore", "KA"));
 
+        Warehouse selectedWarehouse =
+            warehouseController.selectWarehouse(user.address);
+
         user.cart.addItem(1, 2);
 
         OrderController oc = new OrderController();
-        Order order = oc.placeOrder(user, warehouse);
+        Order order = oc.placeOrder(user, selectedWarehouse);
 
-        oc.checkout(order, new UpiPayment());
+        oc.checkout(order, new UpiPaymentStrategy());
 
         System.out.println("Order Status: " + order.status);
         System.out.println("Remaining Stock: "
@@ -352,16 +440,16 @@ public class App {
 
 ---
 
-## 9. UML Diagram
+## 11. UML Diagram
 
-<img width="6371" height="4723" alt="Order_Inventory Managment System excalidraw" src="https://github.com/user-attachments/assets/04e1fe37-0147-4540-a832-1da214e6248b" />
-
+![UML Diagram](Order_Inventory Managment System.excalidraw.png)
 
 ---
 
-## 10. Summary
+## 12. Summary
 
-- Fully working simple Java design
-- Easy to explain in interviews
-- Clear inventory & order flow
-- Strategy pattern used for payment
+- Complete working Java code
+- Warehouse selection via Strategy pattern
+- Payment via Strategy pattern
+- Simple, interview-ready LLD
+- Easy to extend (new strategies, coupons, etc.)
