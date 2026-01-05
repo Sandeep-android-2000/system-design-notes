@@ -255,7 +255,3 @@ No existing code changes required ✔️
 - Walk interviewer through **price calculation flow**
 
 ---
-
-## Summary
-
-This LLD focuses purely on **coupon application logic** using the **Decorator Pattern**, enabling a clean, extensible, and scalable shopping cart design suitable for real-world systems and interviews.
