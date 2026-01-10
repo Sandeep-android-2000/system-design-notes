@@ -1,9 +1,4 @@
-# Low Level Design (LLD) – Splitwise (With BalanceSheetController)
-
-> This document is a **complete rewrite** of the Splitwise LLD, explicitly introducing **BalanceSheetController** as a **first‑class entity** responsible for all balance updates.  
-> The design strictly follows the **provided UML diagram + transcript** and matches **real Splitwise behavior**.
-
----
+# Low Level Design (LLD) – Splitwise
 
 ## 1. Problem Statement
 
@@ -410,14 +405,4 @@ class Splitwise {
 
 ---
 
-## 7. Why This Design Is Interview-Perfect
-
-- Clear separation of responsibility
-- Strategy + Factory patterns
-- BalanceSheetController isolates complexity
-- Easy to extend (settle up, simplify debt)
-
----
-
-✅ This is a **complete, end-to-end Splitwise LLD with full Java code**.
 
