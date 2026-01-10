@@ -114,6 +114,8 @@ Splitwise
 
 Below is a **complete, compilable, interview-ready Java-style implementation** of **all entities**, strictly following the UML + transcript.
 
+<img width="5652" height="6062" alt="CricBuzz_LLD excalidraw" src="https://github.com/user-attachments/assets/febe4d88-969b-4385-b1a5-be300334531a" />
+
 ---
 
 ### 6.1 Enum – SplitType
