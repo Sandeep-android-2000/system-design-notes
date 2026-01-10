@@ -1,7 +1,4 @@
-# Low Level Design (LLD) – Cricbuzz / Cricinfo (Rewritten from Class Diagram)
-
-> This document is rewritten **strictly following the provided UML/Class Diagram** and aligns with **real Cricbuzz behavior**, including **realistic toss logic**.
-
+# Low Level Design (LLD) – Cricbuzz / Cricinfo
 ---
 
 ## 1. LLD Problem Statement
@@ -103,11 +100,7 @@ The system must be **object-oriented, extensible, and interview-ready**.
 
 ## 5. UML / Class Diagram Reference
 
-> Implemented **exactly** as shown in the provided diagram (Excalidraw)
-
-Key takeaway:
-- **Controllers belong to Team, NOT Player**
-- **Ball is the event trigger** for score updates
+<img width="5652" height="6062" alt="CricBuzz_LLD excalidraw" src="https://github.com/user-attachments/assets/cb7b9d70-9ffa-4873-8c3c-d26296027c62" />
 
 ---
 
@@ -430,17 +423,4 @@ class Ball {
 - **Player is a data entity**
 - Observer pattern ensures **decoupled score updates**
 - Strategy pattern ensures **format extensibility**
-
----
-
-## 8. Possible Extensions
-
-- Test Match (Unlimited overs)
-- Super Over
-- DLS method
-- REST APIs using Spring Boot
-
----
-
-✅ This design exactly mirrors **Cricbuzz-style real-time scoring** and is **LLD interview perfect**.
-
+  
