@@ -1,5 +1,4 @@
 # Low Level Design (LLD) – Cricbuzz / Cricinfo
----
 
 ## 1. LLD Problem Statement
 
